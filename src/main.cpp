@@ -30,11 +30,18 @@ int main(int argc, char** argv){
 }
 
 void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
-	sensor_msgs::PointCloud2 labeled_points; 
-	labeled_points = Cone_Detector.coneMarker(*msg);
-	labeled_points.header.stamp = ros::Time::now();
-  	labeled_points.header.frame_id = msg->header.frame_id;
-	labeled_cloud_pub.publish(labeled_points);
+	//Transform msg to xyzi cloud.
+	pcl::PointCloud<pcl::PointXYZI> sensor_points;
+	sensor_points = Cone_Detector.msgToCloud(*msg);
+	//Labeling points.
+	pcl::PointCloud<pcl::PointXYZI> labeled_points;
+	labeled_points = Cone_Detector.coneMarker(sensor_points);
+	//Visualisation.
+	sensor_msgs::PointCloud2 labeled_msg;
+	labeled_msg = Cone_Detector.cloudToMsg(labeled_points);
+	labeled_msg.header.stamp = ros::Time::now();
+  	labeled_msg.header.frame_id = msg->header.frame_id;
+	labeled_cloud_pub.publish(labeled_msg);
 }
 
 void initConeDetection(ros::NodeHandle* node){

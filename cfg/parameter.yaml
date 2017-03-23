@@ -8,7 +8,7 @@ cam/io_method: 'mmap' #IO (mmap, read, userptr).
 cam/image_width: 640
 cam/image_height: 480
 cam/framerate: 30
-cam/pixel_format: 'mjpeg' #Pixelformat(yuyv, uyvy, mjpeg, yuvmono10,rgb24).
+cam/pixel_format: 'yuyv' #Pixelformat(yuyv, uyvy, mjpeg, yuvmono10,rgb24).
 cam/autofocus: false #Autofocus.
 cam/focus: -1 #Focus (0-255, -1 = leave alone).
 cam/autoexposure: true #Exposure.

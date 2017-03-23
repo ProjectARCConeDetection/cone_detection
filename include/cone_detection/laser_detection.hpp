@@ -16,7 +16,9 @@ class LaserDetection{
 public:
 	LaserDetection();
 	~LaserDetection();
-	sensor_msgs::PointCloud2 coneMarker(const sensor_msgs::PointCloud2& sensor_data);
+	sensor_msgs::PointCloud2 cloudToMsg(const pcl::PointCloud<pcl::PointXYZI> cloud);
+	pcl::PointCloud<pcl::PointXYZI> coneMarker(const pcl::PointCloud<pcl::PointXYZI>);
+	pcl::PointCloud<pcl::PointXYZI> msgToCloud(const sensor_msgs::PointCloud2& msg);
 	void setIntensityThreshold(double intensity_threshold);
 	void setLaserHeight(double laser_height);
 	void setObjectHeight(double object_height);

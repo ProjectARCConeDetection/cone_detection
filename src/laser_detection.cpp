@@ -6,13 +6,17 @@ LaserDetection::LaserDetection(){}
 
 LaserDetection::~LaserDetection(){}
 
+sensor_msgs::PointCloud2 LaserDetection::cloudToMsg(const pcl::PointCloud<pcl::PointXYZI> cloud){
+	sensor_msgs::PointCloud2 msg;
+	pcl::PCLPointCloud2 temp_pcl22;
+  	pcl::toPCLPointCloud2(cloud, temp_pcl22);
+  	pcl_conversions::fromPCL(temp_pcl22, msg);
+  	return msg;
+}
+
 //Getting point cloud including only cone candidates.
-sensor_msgs::PointCloud2 LaserDetection::coneMarker(const sensor_msgs::PointCloud2& sensor_data){
+pcl::PointCloud<pcl::PointXYZI> LaserDetection::coneMarker(const pcl::PointCloud<pcl::PointXYZI> cloud){
 	//Transforming into x,y,z vectors.
-	pcl::PointCloud<pcl::PointXYZI> cloud;
-	pcl::PCLPointCloud2 temp_pcl2;
-  	pcl_conversions::toPCL(sensor_data, temp_pcl2);
-  	pcl::fromPCLPointCloud2(temp_pcl2, cloud);
 	std::vector<double> x,y,z, intensity;
 	for(int i = 0; i<cloud.size(); ++i){
 		x.push_back(cloud.points[i].x);
@@ -36,12 +40,14 @@ sensor_msgs::PointCloud2 LaserDetection::coneMarker(const sensor_msgs::PointClou
 			label_cloud.push_back(cloud.points[i]);
 		}}}}
 	}
-	//Transform labeled cloud to publishable pcl2.
-	sensor_msgs::PointCloud2 label_cloud_msg;
-	pcl::PCLPointCloud2 temp_pcl22;
-  	pcl::toPCLPointCloud2(label_cloud, temp_pcl22);
-  	pcl_conversions::fromPCL(temp_pcl22, label_cloud_msg);
-	return label_cloud_msg;
+	return label_cloud;
+}
+
+pcl::PointCloud<pcl::PointXYZI> LaserDetection::msgToCloud(const sensor_msgs::PointCloud2& msg){
+	pcl::PointCloud<pcl::PointXYZI> cloud;
+	pcl::PCLPointCloud2 temp_pcl2;
+  	pcl_conversions::toPCL(msg, temp_pcl2);
+  	pcl::fromPCLPointCloud2(temp_pcl2, cloud);
 }
 
 void LaserDetection::setIntensityThreshold(double intensity_threshold){
