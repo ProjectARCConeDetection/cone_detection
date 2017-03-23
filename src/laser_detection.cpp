@@ -1,0 +1,55 @@
+#include <cone_detection/laser_detection.hpp>
+
+namespace cone_detection{
+
+LaserDetection::LaserDetection(){}
+
+LaserDetection::~LaserDetection(){}
+
+//Getting point cloud including only cone candidates.
+sensor_msgs::PointCloud2 LaserDetection::coneMarker(const sensor_msgs::PointCloud2& sensor_data){
+	//Transforming into x,y,z vectors.
+	pcl::PointCloud<pcl::PointXYZI> cloud;
+	pcl::PCLPointCloud2 temp_pcl2;
+  	pcl_conversions::toPCL(sensor_data, temp_pcl2);
+  	pcl::fromPCLPointCloud2(temp_pcl2, cloud);
+	std::vector<double> x,y,z, intensity;
+	for(int i = 0; i<cloud.size(); ++i){
+		x.push_back(cloud.points[i].x);
+		y.push_back(cloud.points[i].y);
+		z.push_back(cloud.points[i].z);
+		intensity.push_back(cloud.points[i].intensity);
+	}
+	//Select candidate points.
+	pcl::PointCloud<pcl::PointXYZI> label_cloud;
+	for(int i = 0; i<x.size(); ++i){
+		//Filter velodyne points.
+		//Cones has fixed size and laser a fixed position, so that cones have to 
+		//be in a predefined z-Range .
+		if(z[i] <= -(laser_height_-object_height_) && z[i] > -laser_height_){
+		//Cones located in limited lane, y constraint.
+		if(y[i] <= searching_width_ && y[i] >= -searching_width_){
+		//Cones only in front of car, visual detection lonely possible here.
+		if(x[i] > 0.0){
+		//Due to its white color the cones refelcted beams should have high intensity.
+		if(intensity[i]>intensity_threshold_){
+			label_cloud.push_back(cloud.points[i]);
+		}}}}
+	}
+	//Transform labeled cloud to publishable pcl2.
+	sensor_msgs::PointCloud2 label_cloud_msg;
+	pcl::PCLPointCloud2 temp_pcl22;
+  	pcl::toPCLPointCloud2(label_cloud, temp_pcl22);
+  	pcl_conversions::fromPCL(temp_pcl22, label_cloud_msg);
+	return label_cloud_msg;
+}
+
+void LaserDetection::setIntensityThreshold(double intensity_threshold){
+	intensity_threshold_ = intensity_threshold;}
+void LaserDetection::setLaserHeight(double laser_height){
+	laser_height_ = laser_height;}
+void LaserDetection::setObjectHeight(double object_height){
+	object_height_ = object_height;}
+void LaserDetection::setSearchingWidth(double searching_width){
+	searching_width_ = searching_width;}
+}
