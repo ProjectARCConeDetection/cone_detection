@@ -14,6 +14,7 @@ find_package(catkin_simple 0.1.0 REQUIRED COMPONENTS
 catkin_simple(ALL_DEPS_REQUIRED)
 
 cs_add_library(${PROJECT_NAME} 
+	src/image_handler.cpp
     src/laser_detection.cpp
 )
 

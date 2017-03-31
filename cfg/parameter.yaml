@@ -10,7 +10,7 @@ cam/image_height: 480
 cam/framerate: 30
 cam/pixel_format: 'yuyv' #Pixelformat(yuyv, uyvy, mjpeg, yuvmono10,rgb24).
 cam/autofocus: false #Autofocus.
-cam/focus: -1 #Focus (0-255, -1 = leave alone).
+cam/focus: 0 #Focus (0-255, -1 = leave alone).
 cam/autoexposure: true #Exposure.
 cam/exposure: 100
 cam/gain: -1 #Gain (0-100, -1 = leave alone).
@@ -20,8 +20,9 @@ cam/camera_frame_id: 'usb_cam'
 cam/camera_name: 'arc_cam'
 cam/camera_info_url: ''
 #Object parameter.
-object/height: 0.4 #Height of cone.
+object/height: 40 #Height of cone[pixel].
+object/width: 30 #Width of cone[pixel].
 #Laser parameter.
 laser/height: 1.33 #Distance laser to ground.
-laser/intensity_threshold: 40 #Minimal intensity of detected objects.
+laser/intensity_threshold: 70 #Minimal intensity of detected objects.
 laser/searching_width: 2.5 #y-Range for searching.

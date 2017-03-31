@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>	
+	
+<launch>
+
+  <rosparam command="load" file="$(find cone_detection)/cfg/parameter.yaml" />
+
+  <node name="main" pkg="cone_detection" type="main" output="screen" />
+
+  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" />
+  <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+    <remap from="image" to="/usb_cam/image_raw"/>
+    <param name="autosize" value="true" />
+  </node>
+
+
+
+</launch>
+

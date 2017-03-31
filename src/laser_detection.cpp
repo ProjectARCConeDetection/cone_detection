@@ -14,6 +14,22 @@ sensor_msgs::PointCloud2 LaserDetection::cloudToMsg(const pcl::PointCloud<pcl::P
   	return msg;
 }
 
+std::vector < std::vector<double> > LaserDetection::cloudToVectors(const pcl::PointCloud<pcl::PointXYZI> cloud){
+	std::vector<double> x,y,z,index;
+	for(int i=0; i<cloud.size(); ++i){
+		x.push_back(cloud.points[i].x);
+		y.push_back(cloud.points[i].y);
+		z.push_back(cloud.points[i].z);
+		index.push_back(i);
+	}
+	std::vector < std::vector<double> > vectors;
+	vectors.push_back(x);
+	vectors.push_back(y);
+	vectors.push_back(z);
+	vectors.push_back(index);
+	return vectors;
+}
+
 //Getting point cloud including only cone candidates.
 pcl::PointCloud<pcl::PointXYZI> LaserDetection::coneMarker(const pcl::PointCloud<pcl::PointXYZI> cloud){
 	//Transforming into x,y,z vectors.
@@ -27,7 +43,6 @@ pcl::PointCloud<pcl::PointXYZI> LaserDetection::coneMarker(const pcl::PointCloud
 	//Select candidate points.
 	pcl::PointCloud<pcl::PointXYZI> label_cloud;
 	for(int i = 0; i<x.size(); ++i){
-		//Filter velodyne points.
 		//Cones has fixed size and laser a fixed position, so that cones have to 
 		//be in a predefined z-Range .
 		if(z[i] <= -(laser_height_-object_height_) && z[i] > -laser_height_){
@@ -48,6 +63,7 @@ pcl::PointCloud<pcl::PointXYZI> LaserDetection::msgToCloud(const sensor_msgs::Po
 	pcl::PCLPointCloud2 temp_pcl2;
   	pcl_conversions::toPCL(msg, temp_pcl2);
   	pcl::fromPCLPointCloud2(temp_pcl2, cloud);
+  	return cloud;
 }
 
 void LaserDetection::setIntensityThreshold(double intensity_threshold){
