@@ -33,6 +33,7 @@ private:
 	double laser_height_;
 	double object_height_;
 	double searching_width_;
+	int index_;
 };
 } //namespace cone_detection.
 

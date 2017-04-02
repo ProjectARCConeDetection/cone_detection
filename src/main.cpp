@@ -1,14 +1,7 @@
 #include <cone_detection/image_handler.hpp>
 #include <cone_detection/laser_detection.hpp>
 
-//Constants.
-double INTENSITY_THRESHOLD;
-double LASER_HEIGHT;
-double OBJECT_HEIGHT;
-double OBJECT_WIDTH;
-double SEARCHING_WIDTH;
 //Publisher and Subscriber.
-ros::Publisher candidate_image_pub;
 ros::Publisher labeled_cloud_pub;
 ros::Subscriber cloud_sub;
 ros::Subscriber raw_image_sub;
@@ -20,8 +13,8 @@ cone_detection::ImageHandler image_handler;
 void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg);
 void initConeDetection(ros::NodeHandle* node);
-void initImageHandler();
-void initLaserDetection();
+void initImageHandler(ros::NodeHandle* node);
+void initLaserDetection(ros::NodeHandle* node);
 
 
 int main(int argc, char** argv){
@@ -30,9 +23,9 @@ int main(int argc, char** argv){
 	//Getting constants and init subcribers and publishers.
 	initConeDetection(&node);
 	//Init Laser Detection.
-	initLaserDetection();
+	initLaserDetection(&node);
 	//Init image handler.
-	initImageHandler();
+	initImageHandler(&node);
   	//Spinning.
   	ros::spin();
 	return 0;
@@ -47,10 +40,15 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	labeled_points = cone_detector.coneMarker(sensor_points);
 	//Combining image with laser points.
 	if (labeled_points.size() > 0){
-		cone_detector.cloudToVectors(labeled_points);
-		std::vector < std::vector<double> > xyz_index_vector(cone_detector.cloudToVectors(labeled_points));
+		std::vector < std::vector<double> > xyz_index_vector;
+		xyz_index_vector = cone_detector.cloudToVectors(labeled_points); 
 		image_handler.newPointVector(xyz_index_vector);
 		image_handler.transformPointToPixel();
+		xyz_index_vector.clear();
+	}
+	//Getting cropped candidate images.
+	if(image_handler.getImagePtr() != NULL){
+		image_handler.getCandidateImages();
 	}
 	//Visualisation.
 	//Rviz ->labeled point cloud.
@@ -59,11 +57,6 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	labeled_msg.header.stamp = ros::Time::now();
   	labeled_msg.header.frame_id = msg->header.frame_id;
 	labeled_cloud_pub.publish(labeled_msg);
-	//Image View -> Candidates.
-	if(image_handler.getImagePtr() != NULL){
-		image_handler.showCandidates();
-		candidate_image_pub.publish(image_handler.getImagePtr()->toImageMsg());
-	}
 }
 
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg){
@@ -73,27 +66,32 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg){
 }
 
 void initConeDetection(ros::NodeHandle* node){
-	//Getting constants.
-	node->getParam("/object/height", OBJECT_HEIGHT);
-	node->getParam("/object/width", OBJECT_WIDTH);
-	node->getParam("/laser/intensity_threshold", INTENSITY_THRESHOLD);
-	node->getParam("/laser/height", LASER_HEIGHT);
-	node->getParam("/laser/searching_width", SEARCHING_WIDTH);
 	//Subscribing raw sensor cloud and publishing label cloud.
 	labeled_cloud_pub = node->advertise<sensor_msgs::PointCloud2>("/labeled_points", 10);
-	candidate_image_pub = node->advertise<sensor_msgs::Image>("/candidate_img", 10);
 	cloud_sub = node->subscribe("/velodyne_points", 10, cloudCallback);
 	raw_image_sub = node->subscribe("/usb_cam/image_raw", 10, imageCallback);
 }
 
-void initImageHandler(){
-	image_handler.setObjectHeight(OBJECT_HEIGHT);
-	image_handler.setObjectWidth(OBJECT_WIDTH);
+void initImageHandler(ros::NodeHandle* node){
+	//Getting constants.
+	int image_height, image_width;
+	double object_height_pixel, object_width_pixel;
+	node->getParam("/cam/image_height", image_height);
+	node->getParam("/cam/image_width", image_width);
+	node->getParam("/object/height_pixel", object_height_pixel);
+	node->getParam("/object/width_pixel", object_width_pixel);
+	image_handler.setObjectConstants(object_height_pixel, object_width_pixel);
+	image_handler.setImageConstants(image_height, image_width);
 }
 
-void initLaserDetection(){
-	cone_detector.setIntensityThreshold(INTENSITY_THRESHOLD);
-	cone_detector.setLaserHeight(LASER_HEIGHT);
-	cone_detector.setObjectHeight(OBJECT_HEIGHT);
-	cone_detector.setSearchingWidth(SEARCHING_WIDTH);
+void initLaserDetection(ros::NodeHandle* node){
+	double intensity_threshold, laser_height, object_height_meter, searching_width;
+	node->getParam("/laser/intensity_threshold", intensity_threshold);
+	node->getParam("/laser/height", laser_height);
+	node->getParam("/object/height_meter", object_height_meter);
+	node->getParam("/laser/searching_width", searching_width);
+	cone_detector.setIntensityThreshold(intensity_threshold);
+	cone_detector.setLaserHeight(laser_height);
+	cone_detector.setObjectHeight(object_height_meter);
+	cone_detector.setSearchingWidth(searching_width);
 }

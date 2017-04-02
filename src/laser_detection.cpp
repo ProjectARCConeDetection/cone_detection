@@ -2,7 +2,10 @@
 
 namespace cone_detection{
 
-LaserDetection::LaserDetection(){}
+LaserDetection::LaserDetection(){
+	//Initialise candidate index.
+	index_ = 0;
+}
 
 LaserDetection::~LaserDetection(){}
 
@@ -20,7 +23,8 @@ std::vector < std::vector<double> > LaserDetection::cloudToVectors(const pcl::Po
 		x.push_back(cloud.points[i].x);
 		y.push_back(cloud.points[i].y);
 		z.push_back(cloud.points[i].z);
-		index.push_back(i);
+		index.push_back(index_);
+		index_ ++;
 	}
 	std::vector < std::vector<double> > vectors;
 	vectors.push_back(x);

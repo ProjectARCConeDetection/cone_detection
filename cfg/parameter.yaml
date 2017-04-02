@@ -20,9 +20,11 @@ cam/camera_frame_id: 'usb_cam'
 cam/camera_name: 'arc_cam'
 cam/camera_info_url: ''
 #Object parameter.
-object/height: 40 #Height of cone[pixel].
-object/width: 30 #Width of cone[pixel].
+object/height_meter: 0.6 #Height of cone[meter].
+object/width_meter: 0.2 #Width of cone[meter].
+object/height_pixel: 60 #Height of cone[pixel].
+object/width_pixel: 50 #Width of cone[pixel].
 #Laser parameter.
 laser/height: 1.33 #Distance laser to ground.
-laser/intensity_threshold: 70 #Minimal intensity of detected objects.
-laser/searching_width: 2.5 #y-Range for searching.
+laser/intensity_threshold: 60 #Minimal intensity of detected objects.
+laser/searching_width: 3.5 #y-Range for searching.

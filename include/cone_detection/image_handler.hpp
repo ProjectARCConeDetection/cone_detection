@@ -9,6 +9,7 @@
 #include "opencv2/highgui/highgui.hpp"
 
 #include <iostream>
+#include <sstream>
 #include <string>
 
 #include <ros/ros.h>
@@ -21,23 +22,31 @@ class ImageHandler{
 public:
     ImageHandler();
     ~ImageHandler();
+    void getCandidateImages();
     void newPointVector(std::vector < std::vector<double> > xyz_index_vector);
     cv_bridge::CvImagePtr getImagePtr();
     void setImgPtr(cv_bridge::CvImagePtr cv_ptr);
-    void setObjectHeight(double height);
-    void setObjectWidth(double width);
-    void showCandidates();
+    void setImageConstants(int height, int width);
+    void setObjectConstants(double height, double width);
     void transformPointToPixel();
 private:
 	cv_bridge::CvImagePtr cv_ptr_;   
     std::vector<cv::Point2d> imagePoints_;
     std::vector<cv::Point3d> objectPoints_;
+    std::vector<int> index_vector_;
+    // Cam constants.
     cv::Mat intrisicMat_;
     cv::Mat rVec_;
     cv::Mat tVec_;
     cv::Mat distCoeffs_; 
+    cv::Mat projectionMat_;
+    int image_height_;
+    int image_width_;
+    // Object constants.
     double object_height_;
-    double object_width_;  
+    double object_width_; 
+
+    std::string numberToString(int number);
 };
 } //namespace cone_detection.
 
