@@ -27,4 +27,5 @@ object/width_pixel: 50 #Width of cone[pixel].
 #Laser parameter.
 laser/height: 1.33 #Distance laser to ground.
 laser/intensity_threshold: 60 #Minimal intensity of detected objects.
+laser/length_to_VI: 2.2 #Distance laser to VI - Sensor.
 laser/searching_width: 3.5 #y-Range for searching.

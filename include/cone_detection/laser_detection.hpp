@@ -25,12 +25,14 @@ public:
 	pcl::PointCloud<pcl::PointXYZI> msgToCloud(const sensor_msgs::PointCloud2& msg);
 	void setIntensityThreshold(double intensity_threshold);
 	void setLaserHeight(double laser_height);
+	void setLengthToVI(double length_to_VI);
 	void setObjectHeight(double object_height);
 	void setSearchingWidth(double searching_width);
 
 private:
 	double intensity_threshold_;
 	double laser_height_;
+	double length_to_VI_;
 	double object_height_;
 	double searching_width_;
 	int index_;

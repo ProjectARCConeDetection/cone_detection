@@ -5,6 +5,7 @@ project(cone_detection)
 find_package(catkin_simple 0.1.0 REQUIRED COMPONENTS
 	sensor_msgs
 	roscpp
+	rospy
  	pcl_conversions
   	pcl_ros
   	OpenCV  REQUIRED

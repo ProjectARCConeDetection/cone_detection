@@ -22,12 +22,16 @@ class ImageHandler{
 public:
     ImageHandler();
     ~ImageHandler();
-    void getCandidateImages();
+    sensor_msgs::Image::ConstPtr convertCVToSensorMsg(const cv::Mat image);
+    cv::Mat croppCandidates(cv::Mat src, int x_start, int y_start, std::string name);
+    std::vector<sensor_msgs::Image::ConstPtr> getCandidateImages();
     void newPointVector(std::vector < std::vector<double> > xyz_index_vector);
     cv_bridge::CvImagePtr getImagePtr();
+    cv::Mat rotateImage(double angle);
     void setImgPtr(cv_bridge::CvImagePtr cv_ptr);
     void setImageConstants(int height, int width);
     void setObjectConstants(double height, double width);
+    void showCandidates(cv::Mat src, int x_start, int y_start);
     void transformPointToPixel();
 private:
 	cv_bridge::CvImagePtr cv_ptr_;   

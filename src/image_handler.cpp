@@ -20,7 +20,7 @@ ImageHandler::ImageHandler() : intrisicMat_(3,3,cv::DataType<double>::type),
     // Rotation vector (laser coord system to open cv coord system).
     rVec_.at<double>(0) = -90;
     rVec_.at<double>(1) = 90;
-    rVec_.at<double>(2) = 0;
+    rVec_.at<double>(2) = 180;
     // Translation vector.
     tVec_.at<double>(0) = 0;
     tVec_.at<double>(1) = 0;
@@ -48,13 +48,26 @@ ImageHandler::ImageHandler() : intrisicMat_(3,3,cv::DataType<double>::type),
 
 ImageHandler::~ImageHandler(){}
 
-void ImageHandler::getCandidateImages(){
-    // Rotate image.
-    cv::Mat dst;
-    cv::Mat src = cv_ptr_->image;
-    cv::Point2f pt(image_width_/2., image_height_/2.);
-    cv::Mat rot = cv::getRotationMatrix2D(pt, 180, 1.0);
-    cv::warpAffine(src, dst, rot, cv::Size(image_width_, image_height_));
+sensor_msgs::Image::ConstPtr ImageHandler::convertCVToSensorMsg(const cv::Mat image){
+    cv::Mat temp_image = cv_ptr_->image;
+    cv_bridge::CvImagePtr temp_ptr = cv_ptr_;
+    temp_ptr->image = image;
+    sensor_msgs::Image::ConstPtr image_ptr = temp_ptr->toImageMsg();
+    cv_ptr_->image = temp_image;
+    return image_ptr;
+}
+
+cv::Mat ImageHandler::croppCandidates(cv::Mat src, int x_start, int y_start, std::string name){
+    cv::Mat cropped(src, cv::Rect(abs(x_start), abs(y_start),object_width_,object_height_));
+    cv::imwrite(name, cropped);
+    return cropped;
+}
+
+std::vector<sensor_msgs::Image::ConstPtr> ImageHandler::getCandidateImages(){
+    //Rotate Image.
+    cv::Mat dst = rotateImage(180);
+    // Create vector of candidates.
+    std::vector<sensor_msgs::Image::ConstPtr> candidates;
     // Marking candidates.
     if(imagePoints_.size() > 0){
         // Draws the rect in the original image and show it.
@@ -63,13 +76,13 @@ void ImageHandler::getCandidateImages(){
             int x_start = abs(point.x - object_width_/2); 
             int y_start = abs(point.y - object_height_/2);
             if(x_start < image_width_-object_width_ && x_start > 0 && y_start < image_height_-object_height_ && y_start > 0){ 
-                cv::Mat cropped(dst, cv::Rect(abs(x_start), abs(y_start),object_width_,object_height_));
-                std::string name = "/home/sele/candidates/" + numberToString(index_vector_[i]) 
-                                   + ".jpg";
-                cv::imwrite(name, cropped);
+                std::string name = "/home/sele/candidates/" + numberToString(index_vector_[i]) + ".jpg";
+                candidates.push_back(convertCVToSensorMsg(croppCandidates(dst, x_start, y_start, name)));
+                showCandidates(dst, x_start, y_start);
             }
         }
     }
+    return candidates;
 }
 
 cv_bridge::CvImagePtr ImageHandler::getImagePtr(){
@@ -98,6 +111,15 @@ std::string ImageHandler::numberToString(int number){
     return ss.str();
 }
 
+cv::Mat ImageHandler::rotateImage(double angle){
+    cv::Mat dst;
+    cv::Mat src = cv_ptr_->image;
+    cv::Point2f pt(image_width_/2., image_height_/2.);
+    cv::Mat rot = cv::getRotationMatrix2D(pt, angle, 1.0);
+    cv::warpAffine(src, dst, rot, cv::Size(image_width_, image_height_));
+    return dst;
+}
+
 void ImageHandler::setImgPtr(cv_bridge::CvImagePtr cv_ptr){
     cv_ptr_ = cv_ptr;
 }
@@ -110,6 +132,15 @@ void ImageHandler::setObjectConstants(double height, double width){
 void ImageHandler::setImageConstants(int height, int width){
     image_height_ = height;
     image_width_ = width;
+}
+
+void ImageHandler::showCandidates(cv::Mat src, int x_start, int y_start){
+    cv::Mat src_copy = src.clone();
+    cv::Point pt1(x_start, y_start);
+    cv::Point pt2(x_start+object_width_,y_start+object_height_);
+    cv::rectangle(src_copy, pt1, pt2, CV_RGB(255,0,0), 1);
+    cv::imshow("Candidates", src_copy);
+    cv::waitKey(6);
 }
 
 void ImageHandler::transformPointToPixel(){

@@ -2,6 +2,7 @@
 #include <cone_detection/laser_detection.hpp>
 
 //Publisher and Subscriber.
+ros::Publisher candidate_images_pub;
 ros::Publisher labeled_cloud_pub;
 ros::Subscriber cloud_sub;
 ros::Subscriber raw_image_sub;
@@ -15,7 +16,6 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg);
 void initConeDetection(ros::NodeHandle* node);
 void initImageHandler(ros::NodeHandle* node);
 void initLaserDetection(ros::NodeHandle* node);
-
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "cone_detection");
@@ -39,7 +39,7 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	pcl::PointCloud<pcl::PointXYZI> labeled_points;
 	labeled_points = cone_detector.coneMarker(sensor_points);
 	//Combining image with laser points.
-	if (labeled_points.size() > 0){
+	if (labeled_points.size() > 0 && image_handler.getImagePtr() != NULL){
 		std::vector < std::vector<double> > xyz_index_vector;
 		xyz_index_vector = cone_detector.cloudToVectors(labeled_points); 
 		image_handler.newPointVector(xyz_index_vector);
@@ -48,7 +48,8 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	}
 	//Getting cropped candidate images.
 	if(image_handler.getImagePtr() != NULL){
-		image_handler.getCandidateImages();
+		std::vector<sensor_msgs::Image::ConstPtr> candidates = image_handler.getCandidateImages();
+		for (int i=0; i < candidates.size(); i++) candidate_images_pub.publish(candidates[i]);
 	}
 	//Visualisation.
 	//Rviz ->labeled point cloud.
@@ -57,6 +58,7 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	labeled_msg.header.stamp = ros::Time::now();
   	labeled_msg.header.frame_id = msg->header.frame_id;
 	labeled_cloud_pub.publish(labeled_msg);
+	labeled_points.clear();
 }
 
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg){
@@ -67,6 +69,7 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg){
 
 void initConeDetection(ros::NodeHandle* node){
 	//Subscribing raw sensor cloud and publishing label cloud.
+	candidate_images_pub = node->advertise<sensor_msgs::Image>("/candidates", 10);
 	labeled_cloud_pub = node->advertise<sensor_msgs::PointCloud2>("/labeled_points", 10);
 	cloud_sub = node->subscribe("/velodyne_points", 10, cloudCallback);
 	raw_image_sub = node->subscribe("/usb_cam/image_raw", 10, imageCallback);
@@ -85,13 +88,15 @@ void initImageHandler(ros::NodeHandle* node){
 }
 
 void initLaserDetection(ros::NodeHandle* node){
-	double intensity_threshold, laser_height, object_height_meter, searching_width;
+	double intensity_threshold, laser_height, length_to_VI, object_height_meter, searching_width;
 	node->getParam("/laser/intensity_threshold", intensity_threshold);
 	node->getParam("/laser/height", laser_height);
 	node->getParam("/object/height_meter", object_height_meter);
+	node->getParam("/laser/length_to_VI", length_to_VI);
 	node->getParam("/laser/searching_width", searching_width);
 	cone_detector.setIntensityThreshold(intensity_threshold);
 	cone_detector.setLaserHeight(laser_height);
+	cone_detector.setLengthToVI(length_to_VI);
 	cone_detector.setObjectHeight(object_height_meter);
 	cone_detector.setSearchingWidth(searching_width);
 }

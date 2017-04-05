@@ -53,7 +53,7 @@ pcl::PointCloud<pcl::PointXYZI> LaserDetection::coneMarker(const pcl::PointCloud
 		//Cones located in limited lane, y constraint.
 		if(y[i] <= searching_width_ && y[i] >= -searching_width_){
 		//Cones only in front of car, visual detection lonely possible here.
-		if(x[i] > 0.0){
+		if(x[i] > length_to_VI_){
 		//Due to its white color the cones refelcted beams should have high intensity.
 		if(intensity[i]>intensity_threshold_){
 			label_cloud.push_back(cloud.points[i]);
@@ -74,6 +74,8 @@ void LaserDetection::setIntensityThreshold(double intensity_threshold){
 	intensity_threshold_ = intensity_threshold;}
 void LaserDetection::setLaserHeight(double laser_height){
 	laser_height_ = laser_height;}
+void LaserDetection::setLengthToVI(double length_to_VI){
+	length_to_VI_ = length_to_VI;}
 void LaserDetection::setObjectHeight(double object_height){
 	object_height_ = object_height;}
 void LaserDetection::setSearchingWidth(double searching_width){
