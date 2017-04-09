@@ -22,33 +22,37 @@ class ImageHandler{
 public:
     ImageHandler();
     ~ImageHandler();
-    sensor_msgs::Image::ConstPtr convertCVToSensorMsg(const cv::Mat image);
-    cv::Mat croppCandidates(cv::Mat src, int x_start, int y_start, std::string name);
-    std::vector<sensor_msgs::Image::ConstPtr> getCandidateImages();
-    void newPointVector(std::vector < std::vector<double> > xyz_index_vector);
+    void croppCandidates(std::vector < std::vector<double> > xyz_index_vector);
+    void transformPointToPixel();
+    std::vector<cv::Mat> getCandidateVector();
+    std::vector<int> getCandidateIndexVector();
     cv_bridge::CvImagePtr getImagePtr();
+    sensor_msgs::Image::ConstPtr getSensorMsg(const cv::Mat base_image);
+    cv::Mat croppImage(cv::Mat src, int x_start, int y_start);
     cv::Mat rotateImage(double angle);
+    void showCandidates(cv::Mat src, int x_start, int y_start);
+    void setCandidatePath(std::string candidate_path);
     void setImgPtr(cv_bridge::CvImagePtr cv_ptr);
     void setImageConstants(int height, int width);
     void setObjectConstants(double height, double width);
-    void showCandidates(cv::Mat src, int x_start, int y_start);
-    void transformPointToPixel();
 private:
 	cv_bridge::CvImagePtr cv_ptr_;   
-    std::vector<cv::Point2d> imagePoints_;
-    std::vector<cv::Point3d> objectPoints_;
-    std::vector<int> index_vector_;
+    std::vector<cv::Point2d> image_points_;
+    std::vector<cv::Point3d> object_points_;
+    std::vector<cv::Mat> candidates_;
+    std::vector<int> candidate_indizes_;
     // Cam constants.
     cv::Mat intrisicMat_;
     cv::Mat rVec_;
     cv::Mat tVec_;
     cv::Mat distCoeffs_; 
-    cv::Mat projectionMat_;
     int image_height_;
     int image_width_;
     // Object constants.
     double object_height_;
     double object_width_; 
+    // File path.
+    std::string candidate_path_;
 
     std::string numberToString(int number);
 };

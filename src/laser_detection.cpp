@@ -9,11 +9,52 @@ LaserDetection::LaserDetection(){
 
 LaserDetection::~LaserDetection(){}
 
+//Getting point cloud including only cone candidates.
+void LaserDetection::coneMarker(const sensor_msgs::PointCloud2& msg){
+	//Clear vectors.
+	label_cloud_.clear();
+	xyz_index_vector_.clear();
+	//Transform msg to xyzi cloud.
+	pcl::PointCloud<pcl::PointXYZI> cloud;
+	cloud = msgToCloud(msg);
+	//Transforming into x,y,z vectors.
+	std::vector<double> x,y,z, intensity;
+	for(int i = 0; i<cloud.size(); ++i){
+		x.push_back(cloud.points[i].x);
+		y.push_back(cloud.points[i].y);
+		z.push_back(cloud.points[i].z);
+		intensity.push_back(cloud.points[i].intensity);
+	}
+	//Select candidate points.
+	for(int i = 0; i<x.size(); ++i){
+		//Cones has fixed size and laser a fixed position, so that cones have to 
+		//be in a predefined z-Range .
+		if(z[i] <= -(laser_height_-object_height_) && z[i] > -laser_height_){
+		//Cones located in limited lane, y constraint.
+		if(y[i] <= searching_width_ && y[i] >= -searching_width_){
+		//Cones only in front of car, visual detection lonely possible here.
+		if(x[i] > length_to_VI_){
+		//Due to its white color the cones refelcted beams should have high intensity.
+		if(intensity[i]>intensity_threshold_){
+			label_cloud_.push_back(cloud.points[i]);
+		}}}}
+	}
+	//Transfrom to vector.
+	xyz_index_vector_ = cloudToVectors(label_cloud_); 
+}
+
+pcl::PointCloud<pcl::PointXYZI> LaserDetection::getLabeledCloud(){
+	return label_cloud_;}
+
+std::vector < std::vector<double> > LaserDetection::getXYZIndexVector(){
+	return xyz_index_vector_;}
+
 sensor_msgs::PointCloud2 LaserDetection::cloudToMsg(const pcl::PointCloud<pcl::PointXYZI> cloud){
 	sensor_msgs::PointCloud2 msg;
 	pcl::PCLPointCloud2 temp_pcl22;
   	pcl::toPCLPointCloud2(cloud, temp_pcl22);
   	pcl_conversions::fromPCL(temp_pcl22, msg);
+  	msg.header.stamp = ros::Time::now();
   	return msg;
 }
 
@@ -26,40 +67,12 @@ std::vector < std::vector<double> > LaserDetection::cloudToVectors(const pcl::Po
 		index.push_back(index_);
 		index_ ++;
 	}
-	std::vector < std::vector<double> > vectors;
-	vectors.push_back(x);
-	vectors.push_back(y);
-	vectors.push_back(z);
-	vectors.push_back(index);
-	return vectors;
-}
-
-//Getting point cloud including only cone candidates.
-pcl::PointCloud<pcl::PointXYZI> LaserDetection::coneMarker(const pcl::PointCloud<pcl::PointXYZI> cloud){
-	//Transforming into x,y,z vectors.
-	std::vector<double> x,y,z, intensity;
-	for(int i = 0; i<cloud.size(); ++i){
-		x.push_back(cloud.points[i].x);
-		y.push_back(cloud.points[i].y);
-		z.push_back(cloud.points[i].z);
-		intensity.push_back(cloud.points[i].intensity);
-	}
-	//Select candidate points.
-	pcl::PointCloud<pcl::PointXYZI> label_cloud;
-	for(int i = 0; i<x.size(); ++i){
-		//Cones has fixed size and laser a fixed position, so that cones have to 
-		//be in a predefined z-Range .
-		if(z[i] <= -(laser_height_-object_height_) && z[i] > -laser_height_){
-		//Cones located in limited lane, y constraint.
-		if(y[i] <= searching_width_ && y[i] >= -searching_width_){
-		//Cones only in front of car, visual detection lonely possible here.
-		if(x[i] > length_to_VI_){
-		//Due to its white color the cones refelcted beams should have high intensity.
-		if(intensity[i]>intensity_threshold_){
-			label_cloud.push_back(cloud.points[i]);
-		}}}}
-	}
-	return label_cloud;
+	std::vector < std::vector<double> > xyz_index_vector;
+	xyz_index_vector.push_back(x);
+	xyz_index_vector.push_back(y);
+	xyz_index_vector.push_back(z);
+	xyz_index_vector.push_back(index);
+	return xyz_index_vector;
 }
 
 pcl::PointCloud<pcl::PointXYZI> LaserDetection::msgToCloud(const sensor_msgs::PointCloud2& msg){

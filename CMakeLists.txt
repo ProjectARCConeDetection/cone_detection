@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cone_detection)
 
-
 find_package(catkin_simple 0.1.0 REQUIRED COMPONENTS
-	sensor_msgs
 	roscpp
 	rospy
+	geometry_msgs
+	nav_msgs
+	sensor_msgs
  	pcl_conversions
   	pcl_ros
   	OpenCV  REQUIRED
@@ -14,7 +15,9 @@ find_package(catkin_simple 0.1.0 REQUIRED COMPONENTS
 
 catkin_simple(ALL_DEPS_REQUIRED)
 
-cs_add_library(${PROJECT_NAME} 
+cs_add_library(${PROJECT_NAME}
+	src/gps_handler.cpp
+	src/grid_mapper.cpp 
 	src/image_handler.cpp
     src/laser_detection.cpp
 )
