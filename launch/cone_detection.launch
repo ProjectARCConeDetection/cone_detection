@@ -6,6 +6,7 @@
 
   <!-- CONE DETECTION -->
   <node name="main" pkg="cone_detection" type="main" output="screen" />
+  <node name="cone_eval" pkg="cone_detection" type="cone_eval.py" output="screen" />
 
   <!-- WEBCAM -->
   <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" />
