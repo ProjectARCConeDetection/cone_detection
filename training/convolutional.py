@@ -18,15 +18,15 @@ display_step = 10
 toolbar_length = training_iters/100
 reload_model = True
 
-# Datasets.
-path_to_directory = rospy.get_param('/candidate_path')
-path_to_model = rospy.get_param('/model_path')
-datasets = ["biberist_evening"]
 # Network parameter.
 rospy.init_node('convolutional network')
 image_width = rospy.get_param('/object/width_pixel')
 image_height = rospy.get_param('/object/height_pixel')
 n_classes = 2 # Cone or None.
+# Datasets.
+path_to_directory = rospy.get_param('/candidate_path')
+path_to_model = rospy.get_param('/model_path')
+datasets = rospy.get_param('/neural_net/datasets')
 
 def conv_net(x):
     # Store layers weight & bias.
@@ -61,7 +61,7 @@ def conv_net(x):
     fc1 = tf.nn.relu(fc1)
     # Output, class prediction
     out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
-    return out
+    return tf.nn.softmax(out)
 
 def evaluation(result):
     print("Result: ", result)
@@ -139,9 +139,6 @@ pred = conv_net(X)
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=Y))
 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
-# Define Accuracy.
-correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(Y, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 # Initializing the variables
 init = tf.global_variables_initializer()
 saver = tf.train.Saver()
@@ -162,11 +159,6 @@ with tf.Session() as sess:
         while (step < training_iters and not reload_model):
             batch_x, batch_y = getBatch(train_X, train_Y)
             sess.run(optimizer, feed_dict={X: batch_x, Y: batch_y})
-            # if step % display_step == 0:
-            #     loss, acc = sess.run([cost, accuracy], feed_dict={X: batch_x,Y: batch_y})
-            #     print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
-            #           "{:.6f}".format(loss) + ", Training Accuracy= " + \
-            #           "{:.5f}".format(acc)
             if(step%toolbar_length == 0):
                 sys.stdout.write("-")
                 sys.stdout.flush()

@@ -27,9 +27,10 @@ public:
     std::vector<cv::Mat> getCandidateVector();
     std::vector<int> getCandidateIndexVector();
     cv_bridge::CvImagePtr getImagePtr();
-    sensor_msgs::Image::ConstPtr getSensorMsg(const cv::Mat base_image);
+    sensor_msgs::Image getSensorMsg(const cv::Mat base_image);
     cv::Mat croppImage(cv::Mat src, int x_start, int y_start);
     cv::Mat rotateImage(double angle);
+    void showCandidates(cv::Mat src);
     void showCandidates(cv::Mat src, int x_start, int y_start);
     void setCandidatePath(std::string candidate_path);
     void setImgPtr(cv_bridge::CvImagePtr cv_ptr);

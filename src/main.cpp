@@ -157,10 +157,9 @@ void publishCandidates(std::vector < std::vector<double> > xyz_index_vector,
 		int xyz_index = getSameIndex(xyz_index_vector, current_index);
 		//Create and publish candidate.
 		cone_detection::Label label_msg;
-		std::cout << "Publish candidates" << std::endl;
-		label_msg.image = *image_handler.getSensorMsg(candidates[i]);
-		label_msg.x = xyz_index_vector[xyz_index][0];
-		label_msg.y = xyz_index_vector[xyz_index][1];
+		label_msg.image = image_handler.getSensorMsg(candidates[i]);
+		label_msg.x = xyz_index_vector[0][xyz_index];
+		label_msg.y = xyz_index_vector[1][xyz_index];
 		label_msg.label = false;
 		candidates_pub.publish(label_msg);
 	}

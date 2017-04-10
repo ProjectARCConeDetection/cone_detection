@@ -27,7 +27,7 @@ nav_msgs::OccupancyGrid GridMapper::getOccupancyGridMap(){
 	grid.info.resolution = resolution_;
   	grid.info.width = y_steps;
   	geometry_msgs::Pose pose;
-  	pose.position.x = height_/2;
+  	pose.position.x = 0;
   	pose.position.y = 0;
  	pose.position.z = 0;
   	pose.orientation.x = 0;
@@ -47,8 +47,8 @@ std::vector<int> GridMapper::findNextGridElement(double x, double y){
 	int y_index = y/resolution_;
 	if(fmod(y,resolution_) > 0.5) y_index++;
 	std::vector<int> indizes;
-	indizes[0] = x_index; 
-	indizes[1] = y_index;
+	indizes.push_back(x_index); 
+	indizes.push_back(y_index);
 	return indizes;
 }
 	
@@ -57,7 +57,7 @@ void GridMapper::initConeMap(){
 	int y_steps = width_/resolution_;
 	for(int i=0;i<x_steps;++i){
 		std::vector<int> temp;
-		for (int j=0;j<y_steps; ++j)
+		for (int j=-y_steps;j<y_steps; ++j)
 			temp.push_back(0);
 		cone_map_.push_back(temp);
 	}

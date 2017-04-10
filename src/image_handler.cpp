@@ -16,7 +16,7 @@ ImageHandler::ImageHandler() : intrisicMat_(3,3,cv::DataType<double>::type),
     intrisicMat_.at<double>(2, 0) = 0;
     intrisicMat_.at<double>(2, 1) = 0;
     intrisicMat_.at<double>(2, 2) = 1;
-    // Rotation vector (laser coord system to open cv coord system).
+    // Rotation vector.
     rVec_.at<double>(0) = 0;
     rVec_.at<double>(1) = 0;
     rVec_.at<double>(2) = 0;
@@ -71,6 +71,14 @@ void ImageHandler::croppCandidates(std::vector < std::vector<double> > xyz_index
             }
         }
     }
+    else
+        showCandidates(dst);
+}
+
+void ImageHandler::showCandidates(cv::Mat src){
+    cv::Mat src_copy = src.clone();
+    cv::imshow("Candidates", src_copy);
+    cv::waitKey(6);
 }
 
 void ImageHandler::showCandidates(cv::Mat src, int x_start, int y_start){
@@ -98,11 +106,11 @@ std::vector<int> ImageHandler::getCandidateIndexVector(){
 cv_bridge::CvImagePtr ImageHandler::getImagePtr(){
     return cv_ptr_;}
 
-sensor_msgs::Image::ConstPtr ImageHandler::getSensorMsg(const cv::Mat base_image){
+sensor_msgs::Image ImageHandler::getSensorMsg(const cv::Mat base_image){
     cv::Mat temp_image = cv_ptr_->image;
     cv_bridge::CvImagePtr temp_ptr = cv_ptr_;
     temp_ptr->image = base_image;
-    sensor_msgs::Image::ConstPtr image_ptr = temp_ptr->toImageMsg();
+    sensor_msgs::Image image_ptr = *temp_ptr->toImageMsg();
     cv_ptr_->image = temp_image;
     return image_ptr;
 }
@@ -114,7 +122,7 @@ std::string ImageHandler::numberToString(int number){
 }
 
 cv::Mat ImageHandler::croppImage(cv::Mat src, int x_start, int y_start){
-    cv::Mat cropped(src, cv::Rect(abs(x_start+object_width_), abs(y_start-object_height_),object_width_,object_height_));
+    cv::Mat cropped(src, cv::Rect(abs(x_start), abs(y_start-object_height_),object_width_,object_height_));
     return cropped;
 }
 
