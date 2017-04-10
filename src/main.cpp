@@ -49,11 +49,15 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	cone_detector.coneMarker(*msg);
 	std::vector < std::vector<double> > xyz_index_vector = cone_detector.getXYZIndexVector();
 	//Getting cropped candidate images.
-	if(image_handler.getImagePtr()!=NULL) image_handler.croppCandidates(xyz_index_vector);
-	std::vector<cv::Mat> candidates = image_handler.getCandidateVector();
-    std::vector<int> candidate_indizes = image_handler.getCandidateIndexVector();
-	//Publish Candidates.
-	publishCandidates(xyz_index_vector, candidates, candidate_indizes);
+	if(image_handler.getImagePtr()!=NULL){
+		image_handler.croppCandidates(xyz_index_vector);
+		std::vector<cv::Mat> candidates = image_handler.getCandidateVector();
+    	std::vector<int> candidate_indizes = image_handler.getCandidateIndexVector();
+		//Publish Candidates.
+		publishCandidates(xyz_index_vector, candidates, candidate_indizes);
+		//Clear vectors.
+		candidates.clear();
+	}
 	//Visualisation.
 	//Rviz ->labeled point cloud.
 	sensor_msgs::PointCloud2 labeled_msg;
@@ -61,7 +65,6 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	labeled_msg.header.frame_id = msg->header.frame_id;
 	labeled_cloud_pub.publish(labeled_msg);
 	//Clear vectors.
-	candidates.clear();
 	xyz_index_vector.clear();
 }
 
@@ -154,6 +157,7 @@ void publishCandidates(std::vector < std::vector<double> > xyz_index_vector,
 		int xyz_index = getSameIndex(xyz_index_vector, current_index);
 		//Create and publish candidate.
 		cone_detection::Label label_msg;
+		std::cout << "Publish candidates" << std::endl;
 		label_msg.image = *image_handler.getSensorMsg(candidates[i]);
 		label_msg.x = xyz_index_vector[xyz_index][0];
 		label_msg.y = xyz_index_vector[xyz_index][1];

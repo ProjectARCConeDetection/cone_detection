@@ -8,18 +8,18 @@ ImageHandler::ImageHandler() : intrisicMat_(3,3,cv::DataType<double>::type),
                                distCoeffs_(5,1,cv::DataType<double>::type){
     // Intrisic matrix.
     intrisicMat_.at<double>(0, 0) = 621.701971;
-    intrisicMat_.at<double>(1, 0) = 0;
-    intrisicMat_.at<double>(2, 0) = 325.157695;
     intrisicMat_.at<double>(0, 1) = 0;
+    intrisicMat_.at<double>(0, 2) = 325.157695;
+    intrisicMat_.at<double>(1, 0) = 0;
     intrisicMat_.at<double>(1, 1) = 621.971316;
-    intrisicMat_.at<double>(2, 1) = 233.170431;
-    intrisicMat_.at<double>(0, 2) = 0;
-    intrisicMat_.at<double>(1, 2) = 0;
+    intrisicMat_.at<double>(1, 2) = 233.170431;
+    intrisicMat_.at<double>(2, 0) = 0;
+    intrisicMat_.at<double>(2, 1) = 0;
     intrisicMat_.at<double>(2, 2) = 1;
     // Rotation vector (laser coord system to open cv coord system).
-    rVec_.at<double>(0) = -90;
-    rVec_.at<double>(1) = 90;
-    rVec_.at<double>(2) = 180;
+    rVec_.at<double>(0) = 0;
+    rVec_.at<double>(1) = 0;
+    rVec_.at<double>(2) = 0;
     // Translation vector.
     tVec_.at<double>(0) = 0;
     tVec_.at<double>(1) = 0;
@@ -40,12 +40,12 @@ void ImageHandler::croppCandidates(std::vector < std::vector<double> > xyz_index
     image_points_.clear();
     candidates_.clear();
     candidate_indizes_.clear();
-    //Push back vector points.
+    //Push back vector points (laser coords -> cam coords).
     for(int i=0; i<xyz_index_vector[0].size(); ++i){
         cv::Point3d point;
-        point.x = xyz_index_vector[0][i];
-        point.y = xyz_index_vector[1][i];
-        point.z = xyz_index_vector[2][i];
+        point.z = xyz_index_vector[0][i];
+        point.x = -xyz_index_vector[1][i];
+        point.y = -xyz_index_vector[2][i];
         object_points_.push_back(point);
     }
     //Transform to pixel points.
@@ -57,8 +57,8 @@ void ImageHandler::croppCandidates(std::vector < std::vector<double> > xyz_index
         // Draws the rect in the original image and show it.
         for(int i=0; i<image_points_.size();++i){
             cv::Point point = image_points_[i];
-            int x_start = abs(point.x - object_width_/2); 
-            int y_start = abs(point.y - object_height_/2);
+            int x_start = point.x - object_width_/2; 
+            int y_start = point.y - object_height_/2;
             if(x_start < image_width_-object_width_ && x_start > 0 && y_start < image_height_-object_height_ && y_start > 0){ 
                 cv::Mat cropped = croppImage(dst, x_start, y_start);
                 //Push back vectors.
@@ -76,7 +76,7 @@ void ImageHandler::croppCandidates(std::vector < std::vector<double> > xyz_index
 void ImageHandler::showCandidates(cv::Mat src, int x_start, int y_start){
     cv::Mat src_copy = src.clone();
     cv::Point pt1(x_start, y_start);
-    cv::Point pt2(x_start+object_width_,y_start+object_height_);
+    cv::Point pt2(x_start+object_width_,y_start-object_height_);
     cv::rectangle(src_copy, pt1, pt2, CV_RGB(255,0,0), 1);
     cv::imshow("Candidates", src_copy);
     cv::waitKey(6);
@@ -86,9 +86,6 @@ void ImageHandler::transformPointToPixel(){
     //Projecting.
     if(object_points_.size() > 0){
         cv::projectPoints(object_points_, rVec_, tVec_, intrisicMat_, distCoeffs_, image_points_);
-
-        for(int j=0; j<object_points_.size();++j)
-            std::cout << object_points_[j] << " transformed to " << image_points_[j] << std::endl;
     }
 }
 
@@ -117,7 +114,7 @@ std::string ImageHandler::numberToString(int number){
 }
 
 cv::Mat ImageHandler::croppImage(cv::Mat src, int x_start, int y_start){
-    cv::Mat cropped(src, cv::Rect(abs(x_start), abs(y_start),object_width_,object_height_));
+    cv::Mat cropped(src, cv::Rect(abs(x_start+object_width_), abs(y_start-object_height_),object_width_,object_height_));
     return cropped;
 }
 

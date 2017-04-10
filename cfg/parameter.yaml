@@ -26,11 +26,11 @@ object/height_pixel: 60 #Height of cone[pixel].
 object/width_pixel: 50 #Width of cone[pixel].
 #Laser parameter.
 laser/height: 1.33 #Distance laser to ground.
-laser/intensity_threshold: 60 #Minimal intensity of detected objects.
+laser/intensity_threshold: 80 #Minimal intensity of detected objects.
 laser/length_to_VI: 2.2 #Distance laser to VI - Sensor.
 laser/searching_length: 100 #x-Range for searching.
 laser/searching_resolution: 0.5 #Grid resolution.
-laser/searching_width: 3.5 #y-Range for searching.
+laser/searching_width: 1.5 #y-Range for searching.
 #Paths.
 candidate_path: '/home/sele/candidates/' #Path to candidate images.
 model_path: '/home/sele/model/' #Path to trained models.
