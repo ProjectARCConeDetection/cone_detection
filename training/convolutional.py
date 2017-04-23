@@ -32,9 +32,9 @@ def conv_net(x):
     # Store layers weight & bias.
     weights = {
 
-        'wc1': tf.Variable(tf.random_normal([5, 5, 1, 32])),
+        'wc1': tf.Variable(tf.random_normal([5, 5, 3, 32])),
         'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64])),
-        'fc1': tf.Variable(tf.random_normal([15*39*64, 1024])),
+        'fc1': tf.Variable(tf.random_normal([45*39*64, 1024])),
         'out': tf.Variable(tf.random_normal([1024, n_classes]))
     }
 
@@ -45,7 +45,7 @@ def conv_net(x):
         'out': tf.Variable(tf.random_normal([n_classes]))
     }   
     # Reshape input picture.
-    x = tf.reshape(x, shape=[-1,image_height,image_width,1])
+    x = tf.reshape(x, shape=[-1,image_height,image_width,3])
     # Convolutional Layer.
     conv1  = tf.nn.conv2d(x, weights['wc1'], strides=[1,1,1,1], padding='SAME')
     conv1 = tf.nn.bias_add(conv1, biases['bc1'])

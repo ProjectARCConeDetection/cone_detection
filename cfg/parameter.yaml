@@ -19,6 +19,8 @@ cam/white_balance: 4000 #White balance temperature.
 cam/camera_frame_id: 'usb_cam'
 cam/camera_name: 'arc_cam'
 cam/camera_info_url: ''
+cam/intrinsic_matrix: [621.701971, 0.000000, 325.157695, 0.000000, 621.971316, 233.170431, 0.000000, 0.000000, 1.000000]
+cam/distortion_vector: [0.079264, -0.149967, 0.000716, 0.001749, 0.000000]
 #Object parameter.
 object/height_meter: 0.6 #Height of cone[meter].
 object/width_meter: 0.2 #Width of cone[meter].
@@ -26,11 +28,11 @@ object/height_pixel: 60 #Height of cone[pixel].
 object/width_pixel: 50 #Width of cone[pixel].
 #Laser parameter.
 laser/height: 1.33 #Distance laser to ground.
-laser/intensity_threshold: 50 #Minimal intensity of detected objects.
+laser/intensity_threshold: 80 #Minimal intensity of detected objects.
 laser/length_to_VI: 2.2 #Distance laser to VI - Sensor.
 laser/searching_length: 100 #x-Range for searching.
 laser/searching_resolution: 0.5 #Grid resolution.
-laser/searching_width: 3.5 #y-Range for searching.
+laser/searching_width: 6.5 #y-Range for searching.
 #Neural Net.
 neural_net/datasets: ['biberist_evening']
 #Paths.

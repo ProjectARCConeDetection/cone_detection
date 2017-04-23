@@ -1,4 +1,3 @@
-#include <cone_detection/gps_handler.hpp>
 #include <cone_detection/grid_mapper.hpp>
 #include <cone_detection/image_handler.hpp>
 #include <cone_detection/laser_detection.hpp>
@@ -11,17 +10,14 @@ ros::Publisher cone_grid_pub;
 ros::Publisher labeled_cloud_pub;
 ros::Subscriber cloud_sub;
 ros::Subscriber cones_sub;
-ros::Subscriber gps_position_sub;
 ros::Subscriber raw_image_sub;
 //Init classes.
 cone_detection::LaserDetection cone_detector;
 cone_detection::ImageHandler image_handler;
 cone_detection::GridMapper grid_mapper;
-cone_detection::GPSHandler gps_handler;
 //Decleration of functions.
 void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
 void conesCallback(const cone_detection::Label::ConstPtr& msg);
-void gpsCallback(const geometry_msgs::TransformStamped::ConstPtr& msg);
 int getSameIndex(std::vector < std::vector<double> > xyz_index_vector,int index);
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg);
 void initConeDetection(ros::NodeHandle* node);
@@ -64,6 +60,9 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	labeled_msg = cone_detector.cloudToMsg(cone_detector.getLabeledCloud());
 	labeled_msg.header.frame_id = msg->header.frame_id;
 	labeled_cloud_pub.publish(labeled_msg);
+	//Grid map visualisation.
+	nav_msgs::OccupancyGrid cone_grid = grid_mapper.getOccupancyGridMap();
+	cone_grid_pub.publish(cone_grid);
 	//Clear vectors.
 	xyz_index_vector.clear();
 }
@@ -73,18 +72,9 @@ void conesCallback(const cone_detection::Label::ConstPtr& msg){
 	std::vector<double> cones_rel_position;
 	cones_rel_position.push_back(msg->x);
 	cones_rel_position.push_back(msg->y);
-	//Updating grid map.
-	grid_mapper.updateConeMap(cones_rel_position,gps_handler.get2DPosition());
-	//Grid map visualisation.
-	nav_msgs::OccupancyGrid cone_grid = grid_mapper.getOccupancyGridMap();
-	cone_grid_pub.publish(cone_grid);
-}
-
-void gpsCallback(const geometry_msgs::TransformStamped::ConstPtr& msg){
-	std::vector<double> temp_position;
-	temp_position.push_back(msg->transform.translation.x);
-	temp_position.push_back(msg->transform.translation.y);
-	gps_handler.set2DPosition(temp_position);
+	//Updating grid map. 
+	//TODO
+	// grid_mapper.updateConeMap(cones_rel_position,...);
 }
 
 int getSameIndex(std::vector < std::vector<double> > xyz_index_vector,int index){
@@ -104,7 +94,6 @@ void initConeDetection(ros::NodeHandle* node){
 	cone_grid_pub = node->advertise<nav_msgs::OccupancyGrid>("/cones_grid", 10);
 	labeled_cloud_pub = node->advertise<sensor_msgs::PointCloud2>("/labeled_points", 10);
 	cloud_sub = node->subscribe("/velodyne_points", 10, cloudCallback);
-	gps_position_sub = node->subscribe("/gps/fix_transform", 10, gpsCallback);
 	raw_image_sub = node->subscribe("/usb_cam/image_raw", 10, imageCallback);
 	cones_sub = node->subscribe("/cones", 10, conesCallback);
 }
