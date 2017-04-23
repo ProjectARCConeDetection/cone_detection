@@ -10,6 +10,7 @@ find_package(catkin_simple 0.1.0 REQUIRED COMPONENTS
  	pcl_conversions
   	pcl_ros
   	OpenCV  REQUIRED
+  	eigen_catkin
 	catkin_simple REQUIRED
 )
 
@@ -19,6 +20,7 @@ cs_add_library(${PROJECT_NAME}
 	src/grid_mapper.cpp 
 	src/image_handler.cpp
     src/laser_detection.cpp
+    src/tools.cpp
 )
 
 cs_add_executable(main src/main.cpp)

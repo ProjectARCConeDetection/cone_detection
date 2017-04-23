@@ -1,7 +1,5 @@
 #include <cone_detection/image_handler.hpp>
 
-namespace cone_detection{
-
 ImageHandler::ImageHandler() : intrisicMat_(3,3,cv::DataType<double>::type), 
                                rVec_(3,1,cv::DataType<double>::type), 
                                tVec_(3,1,cv::DataType<double>::type), 
@@ -34,18 +32,18 @@ ImageHandler::ImageHandler() : intrisicMat_(3,3,cv::DataType<double>::type),
 
 ImageHandler::~ImageHandler(){}
 
-void ImageHandler::croppCandidates(std::vector < std::vector<double> > xyz_index_vector){
+void ImageHandler::croppCandidates(std::vector <Candidate> xyz_index_vector){
     //Clear vectors.
     object_points_.clear();
     image_points_.clear();
     candidates_.clear();
     candidate_indizes_.clear();
     //Push back vector points (laser coords -> cam coords).
-    for(int i=0; i<xyz_index_vector[0].size(); ++i){
+    for(int i=0; i<xyz_index_vector.size(); ++i){
         cv::Point3d point;
-        point.z = xyz_index_vector[0][i];
-        point.x = -xyz_index_vector[1][i];
-        point.y = -xyz_index_vector[2][i];
+        point.z = xyz_index_vector[i].x;
+        point.x = -xyz_index_vector[i].y;
+        point.y = -xyz_index_vector[i].z;
         object_points_.push_back(point);
     }
     //Transform to pixel points.
@@ -57,15 +55,17 @@ void ImageHandler::croppCandidates(std::vector < std::vector<double> > xyz_index
         // Draws the rect in the original image and show it.
         for(int i=0; i<image_points_.size();++i){
             cv::Point point = image_points_[i];
-            int x_start = point.x - object_width_/2; 
-            int y_start = point.y - object_height_/2;
+            // int x_start = point.x - object_width_/2;
+            // int y_start = point.y - object_height_/2;
+            int x_start = point.x;
+            int y_start = point.y + object_height_/2;
             if(x_start < image_width_-object_width_ && x_start > 0 && y_start < image_height_-object_height_ && y_start > 0){ 
                 cv::Mat cropped = croppImage(dst, x_start, y_start);
                 //Push back vectors.
                 candidates_.push_back(cropped);
-                candidate_indizes_.push_back(xyz_index_vector[3][i]);
+                candidate_indizes_.push_back(xyz_index_vector[i].index);
                 //Save and show candidate.
-                std::string name = candidate_path_ + numberToString(xyz_index_vector[3][i]) + ".jpg";
+                std::string name = candidate_path_ + numberToString(xyz_index_vector[i].index) + ".jpg";
                 cv::imwrite(name, cropped);
                 showCandidates(dst, x_start, y_start);
             }
@@ -87,7 +87,7 @@ void ImageHandler::showCandidates(cv::Mat src, int x_start, int y_start){
     cv::Point pt2(x_start+object_width_,y_start-object_height_);
     cv::rectangle(src_copy, pt1, pt2, CV_RGB(255,0,0), 1);
     cv::imshow("Candidates", src_copy);
-    cv::waitKey(6);
+    cv::waitKey(10);
 }
 
 void ImageHandler::transformPointToPixel(){
@@ -150,5 +150,3 @@ void ImageHandler::setImageConstants(int height, int width){
     image_height_ = height;
     image_width_ = width;
 }
-
-} //namespace cone_detection.

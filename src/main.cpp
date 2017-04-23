@@ -1,31 +1,36 @@
 #include <cone_detection/grid_mapper.hpp>
 #include <cone_detection/image_handler.hpp>
 #include <cone_detection/laser_detection.hpp>
+#include <cone_detection/tools.hpp>
 
+#include <ros/ros.h>
 #include <cone_detection/Label.h>
+#include <geometry_msgs/Pose.h>
+#include <nav_msgs/Odometry.h>
 
-//Publisher and Subscriber.
+//Publisher.
 ros::Publisher candidates_pub;
 ros::Publisher cone_grid_pub;
 ros::Publisher labeled_cloud_pub;
 ros::Subscriber cloud_sub;
-ros::Subscriber cones_sub;
 ros::Subscriber raw_image_sub;
+ros::Subscriber cones_sub;
+ros::Subscriber rovio_sub;
 //Init classes.
-cone_detection::LaserDetection cone_detector;
-cone_detection::ImageHandler image_handler;
-cone_detection::GridMapper grid_mapper;
+LaserDetection cone_detector;
+ImageHandler image_handler;
+GridMapper grid_mapper;
 //Decleration of functions.
 void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
 void conesCallback(const cone_detection::Label::ConstPtr& msg);
-int getSameIndex(std::vector < std::vector<double> > xyz_index_vector,int index);
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg);
+void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg);
+void publishCandidates(std::vector <Candidate> xyz_index_vector,
+					   std::vector<cv::Mat> candidates, std::vector<int> candidate_indizes);
 void initConeDetection(ros::NodeHandle* node);
 void initGridMapper(ros::NodeHandle* node);
 void initImageHandler(ros::NodeHandle* node);
 void initLaserDetection(ros::NodeHandle* node);
-void publishCandidates(std::vector < std::vector<double> > xyz_index_vector,
-					   std::vector<cv::Mat> candidates, std::vector<int> candidate_indizes);
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "cone_detection");
@@ -43,7 +48,7 @@ int main(int argc, char** argv){
 void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	//Detect candidates.
 	cone_detector.coneMarker(*msg);
-	std::vector < std::vector<double> > xyz_index_vector = cone_detector.getXYZIndexVector();
+	std::vector <Candidate> xyz_index_vector = cone_detector.getXYZIndexVector();
 	//Getting cropped candidate images.
 	if(image_handler.getImagePtr()!=NULL){
 		image_handler.croppCandidates(xyz_index_vector);
@@ -53,6 +58,7 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 		publishCandidates(xyz_index_vector, candidates, candidate_indizes);
 		//Clear vectors.
 		candidates.clear();
+		candidate_indizes.clear();
 	}
 	//Visualisation.
 	//Rviz ->labeled point cloud.
@@ -69,23 +75,54 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
 void conesCallback(const cone_detection::Label::ConstPtr& msg){
 	//Getting coordinates.
-	std::vector<double> cones_rel_position;
-	cones_rel_position.push_back(msg->x);
-	cones_rel_position.push_back(msg->y);
+	Eigen::Vector3d local(msg->x, msg->y,0);
 	//Updating grid map. 
-	//TODO
-	// grid_mapper.updateConeMap(cones_rel_position,...);
-}
-
-int getSameIndex(std::vector < std::vector<double> > xyz_index_vector,int index){
-	for(int i=0;i<xyz_index_vector.size();++i)
-		if(index == xyz_index_vector[i][3]) return index;
+	grid_mapper.updateConeMap(local);
 }
 
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg){
     cv_bridge::CvImagePtr cv_ptr;
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     image_handler.setImgPtr(cv_ptr);
+}
+
+void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg){
+	//Get rovio pose.
+	Pose rovio_pose;
+	geometry_msgs::Pose temp = msg->pose.pose;
+	Eigen::Vector3d temp_position = Eigen::Vector3d(temp.position.x, temp.position.y, 0);
+	Eigen::Vector4d temp_orientation = Eigen::Vector4d(temp.orientation.x, temp.orientation.y, 
+											 		   temp.orientation.z, temp.orientation.w);
+	//Transfrom orientation.
+	Eigen::Vector4d init_quat(-0.7818,0.0086,-0.0001,-0.6275);
+	Eigen::Vector4d init_quat_soll(0,0,0,1);	
+	Eigen::Vector4d quat_init_trafo = quat::diffQuaternion(init_quat, init_quat_soll);
+  	rovio_pose.orientation = quat::diffQuaternion(quat_init_trafo, temp_orientation);
+  	//Transform position.
+  	temp_position = Eigen::Vector3d(-temp_position(1), temp_position(0), temp_position(2));
+  	Eigen::Vector3d trans_vi_laser(-2.3,0,0);
+	temp_position += trans_vi_laser;
+	rovio_pose.position = temp_position;
+  	//Set pose.
+  	grid_mapper.setPose(rovio_pose);
+}
+
+void publishCandidates(std::vector <Candidate> xyz_index_vector,
+					   std::vector<cv::Mat> candidates, std::vector<int> candidate_indizes){
+	//Comparing xyz_index_points with candidate_indizes to get only the points
+	//in the image (no error while cropping).
+	for(int i=0;i<candidates.size();++i){
+		int current_index = candidate_indizes[i];
+		int xyz_index = vector::getSameIndex(xyz_index_vector, current_index);
+		if(xyz_index > xyz_index_vector.size() || xyz_index < 0) continue;
+		// Create and publish candidate.
+		cone_detection::Label label_msg;
+		label_msg.image = image_handler.getSensorMsg(candidates[i]);
+		label_msg.x = xyz_index_vector[xyz_index].x;
+		label_msg.y = xyz_index_vector[xyz_index].y;
+		label_msg.label = false;
+		candidates_pub.publish(label_msg);
+	}
 }
 
 void initConeDetection(ros::NodeHandle* node){
@@ -96,6 +133,7 @@ void initConeDetection(ros::NodeHandle* node){
 	cloud_sub = node->subscribe("/velodyne_points", 10, cloudCallback);
 	raw_image_sub = node->subscribe("/usb_cam/image_raw", 10, imageCallback);
 	cones_sub = node->subscribe("/cones", 10, conesCallback);
+	rovio_sub = node->subscribe("/rovio/odometry", 10, rovioCallback);
 }
 
 void initGridMapper(ros::NodeHandle* node){
@@ -135,21 +173,4 @@ void initLaserDetection(ros::NodeHandle* node){
 	cone_detector.setLengthToVI(length_to_VI);
 	cone_detector.setObjectHeight(object_height_meter);
 	cone_detector.setSearchingWidth(searching_width);
-}
-
-void publishCandidates(std::vector < std::vector<double> > xyz_index_vector,
-					   std::vector<cv::Mat> candidates, std::vector<int> candidate_indizes){
-	//Comparing xyz_index_points with candidate_indizes to get only the points
-	//in the image (no error while cropping).
-	for(int i=0;i<candidates.size();++i){
-		int current_index = candidate_indizes[i];
-		int xyz_index = getSameIndex(xyz_index_vector, current_index);
-		//Create and publish candidate.
-		cone_detection::Label label_msg;
-		label_msg.image = image_handler.getSensorMsg(candidates[i]);
-		label_msg.x = xyz_index_vector[0][xyz_index];
-		label_msg.y = xyz_index_vector[1][xyz_index];
-		label_msg.label = false;
-		candidates_pub.publish(label_msg);
-	}
 }

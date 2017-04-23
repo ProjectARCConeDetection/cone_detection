@@ -1,22 +1,23 @@
 #include <cone_detection/grid_mapper.hpp>
 
-namespace cone_detection{
-
-GridMapper::GridMapper(){}
+GridMapper::GridMapper(){
+	//Init pose.
+	pose_.position = Eigen::Vector3d(0,0,0);
+	pose_.orientation = Eigen::Vector4d(0,0,0,1);
+}
 	
 GridMapper::~GridMapper(){}
 
-void GridMapper::updateConeMap(std::vector<double> rel_cone_pose,
-					   		   std::vector<double> global_pose){
-	double x_local = rel_cone_pose[0];
-	double y_local = rel_cone_pose[1];
-	double x_global = global_pose[0];
-	double y_global = global_pose[1];
-	double x = x_global + x_local;
-	double y = y_global + y_local;
+void GridMapper::updateConeMap(Eigen::Vector3d local){
+	//Transform local to global vector.
+	Eigen::Vector3d delta_global = pose_.localToGlobal(local);
+	//Find global position.
+	double x = pose_.position(0) + delta_global(0);
+	double y = pose_.position(1) + delta_global(1);
 	std::vector<int> grid_indizes = findNextGridElement(x,y);
 	// Updating cone map.
-	cone_map_[grid_indizes[0]][grid_indizes[1]] = 1;
+	std::cout << "Cone found at global position x: " << x << " and y: " << y << std::endl;
+	// cone_map_[grid_indizes[0]][grid_indizes[1]] = 1;
 }
 
 nav_msgs::OccupancyGrid GridMapper::getOccupancyGridMap(){
@@ -63,10 +64,10 @@ void GridMapper::initConeMap(){
 	}
 }
 
-void GridMapper::setGridHeight(double height){
-	height_ = height;}
-void GridMapper::setGridResolution(double resolution){
-	resolution_ = resolution;}
-void GridMapper::setGridWidth(double width){
-	width_ = width;}
-}
+void GridMapper::setGridHeight(double height){height_ = height;}
+
+void GridMapper::setGridResolution(double resolution){resolution_ = resolution;}
+
+void GridMapper::setGridWidth(double width){width_ = width;}
+
+void GridMapper::setPose(Pose pose){pose_ = pose;}

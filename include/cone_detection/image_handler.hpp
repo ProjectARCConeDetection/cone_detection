@@ -1,6 +1,9 @@
 #ifndef CONE_DETECTION_IMAGE_HANDLER_HPP
 #define CONE_DETECTION_IMAGE_HANDLER_HPP
 
+#include <cone_detection/laser_detection.hpp>
+#include <cone_detection/tools.hpp>
+
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include "opencv2/core/core.hpp"
@@ -12,17 +15,14 @@
 #include <sstream>
 #include <string>
 
-#include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
-
-namespace cone_detection{
 
 class ImageHandler{
 public:
     ImageHandler();
     ~ImageHandler();
-    void croppCandidates(std::vector < std::vector<double> > xyz_index_vector);
+    void croppCandidates(std::vector <Candidate> xyz_index_vector);
     void transformPointToPixel();
     std::vector<cv::Mat> getCandidateVector();
     std::vector<int> getCandidateIndexVector();
@@ -57,6 +57,5 @@ private:
 
     std::string numberToString(int number);
 };
-} //namespace cone_detection.
 
 #endif

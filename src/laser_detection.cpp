@@ -1,7 +1,5 @@
 #include <cone_detection/laser_detection.hpp>
 
-namespace cone_detection{
-
 LaserDetection::LaserDetection(){
 	//Initialise candidate index.
 	index_ = 0;
@@ -46,7 +44,7 @@ void LaserDetection::coneMarker(const sensor_msgs::PointCloud2& msg){
 pcl::PointCloud<pcl::PointXYZI> LaserDetection::getLabeledCloud(){
 	return label_cloud_;}
 
-std::vector < std::vector<double> > LaserDetection::getXYZIndexVector(){
+std::vector <Candidate> LaserDetection::getXYZIndexVector(){
 	return xyz_index_vector_;}
 
 sensor_msgs::PointCloud2 LaserDetection::cloudToMsg(const pcl::PointCloud<pcl::PointXYZI> cloud){
@@ -58,20 +56,17 @@ sensor_msgs::PointCloud2 LaserDetection::cloudToMsg(const pcl::PointCloud<pcl::P
   	return msg;
 }
 
-std::vector < std::vector<double> > LaserDetection::cloudToVectors(const pcl::PointCloud<pcl::PointXYZI> cloud){
-	std::vector<double> x,y,z,index;
+std::vector <Candidate> LaserDetection::cloudToVectors(const pcl::PointCloud<pcl::PointXYZI> cloud){
+	std::vector<Candidate> xyz_index_vector;
 	for(int i=0; i<cloud.size(); ++i){
-		x.push_back(cloud.points[i].x);
-		y.push_back(cloud.points[i].y);
-		z.push_back(cloud.points[i].z);
-		index.push_back(index_);
+		Candidate temp;
+		temp.x = cloud.points[i].x;
+		temp.y = cloud.points[i].y;
+		temp.z = cloud.points[i].z;
+		temp.index = index_;
 		index_ ++;
+		xyz_index_vector.push_back(temp);
 	}
-	std::vector < std::vector<double> > xyz_index_vector;
-	xyz_index_vector.push_back(x);
-	xyz_index_vector.push_back(y);
-	xyz_index_vector.push_back(z);
-	xyz_index_vector.push_back(index);
 	return xyz_index_vector;
 }
 
@@ -93,4 +88,3 @@ void LaserDetection::setObjectHeight(double object_height){
 	object_height_ = object_height;}
 void LaserDetection::setSearchingWidth(double searching_width){
 	searching_width_ = searching_width;}
-}
