@@ -24,9 +24,6 @@ cs_add_library(${PROJECT_NAME}
 cs_add_executable(main src/main.cpp)
 target_link_libraries(main ${catkin_LIBRARIES} ${PROJECT_NAME})
 
-cs_add_executable(testing_transformation test/transformation.cpp)
-target_link_libraries(testing_transformation ${catkin_LIBRARIES} ${PROJECT_NAME})
-
 cs_install()
 cs_export()
 

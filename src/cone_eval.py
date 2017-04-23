@@ -8,7 +8,7 @@ import rospy
 from cone_detection.msg import Label
 from sensor_msgs.msg import Image
 
-#Init ros
+#Init ros.
 rospy.init_node('cone_eval')
 #Net parameters.
 path_to_model = rospy.get_param('/model_path')
