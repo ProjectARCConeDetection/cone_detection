@@ -21,20 +21,32 @@ cam/camera_name: 'arc_cam'
 cam/camera_info_url: ''
 cam/intrinsic_matrix: [621.701971, 0.000000, 325.157695, 0.000000, 621.971316, 233.170431, 0.000000, 0.000000, 1.000000]
 cam/distortion_vector: [0.079264, -0.149967, 0.000716, 0.001749, 0.000000]
-#Object parameter.
-object/height_meter: 0.6 #Height of cone[meter].
-object/width_meter: 0.2 #Width of cone[meter].
-object/height_pixel: 60 #Height of cone[pixel].
-object/width_pixel: 50 #Width of cone[pixel].
-#Laser parameter.
-laser/height: 1.33 #Distance laser to ground.
-laser/intensity_threshold: 90 #Minimal intensity of detected objects.
-laser/length_to_VI: 2.2 #Distance laser to VI - Sensor.
-laser/searching_length: 100 #x-Range for searching.
-laser/searching_resolution: 0.5 #Grid resolution.
-laser/searching_width: 3.5 #y-Range for searching.
+#eRod parameter.
+erod/length_laser_to_VI: 2.2 #Distance laser to VI - Sensor.
+erod/distance_wheel_axis: 2.35585  #[m], distance between front and rear axis.
+erod/height_laser: 1.33 #Distance laser to ground.
+#Cone parameter.
+cone/height_meter: 0.6 #Height of cone[meter].
+cone/height_pixel: 60 #Height of cone[pixel].
+cone/width_pixel: 50 #Width of cone[pixel].
+#Detection parameter.
+detection/cone_area: 0.8 #Length of quadratic cone area in grid map[meter].
+detection/searching_length: 100 #x-Range for searching.
+detection/searching_resolution: 0.1 #Grid resolution.
+detection/searching_width: 3.0 #y-Range for searching.
+detection/intensity_threshold: 90 #Minimal intensity of detected objects.
 #Neural Net.
 neural_net/datasets: ['biberist_evening']
 #Paths.
 candidate_path: '/home/sele/candidates/' #Path to candidate images.
 model_path: '/home/sele/models/' #Path to trained models.
+#Planning.
+planning/distance_interpolation: 3 #Distance of three points for curvature calculation.
+planning/K1_LAD_S: 1.1 #Dynamic part for look ahead distance steer.
+planning/K2_LAD_S: 0 #Static part for look ahead distance steer.
+planning/K1_LAD_V: 0.5 #Dynamic part for lad radius for velocity.
+planning/K2_LAD_V: 0 #Dynamic part for lad radius for velocity reference.
+planning/upperbound_lad_s: 7.3 #Empyrisch getestet
+planning/lowerbound_lad_s: 3  #Empyrisch getestet
+planning/max_absolute_velocity: 10 #[m/s], maximal velocity.
+planning/max_lateral_acceleration: 4 #[m/s²], maximal lateral acceleration.

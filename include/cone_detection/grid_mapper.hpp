@@ -8,6 +8,7 @@
 #include <math.h> 
 #include <vector>
 
+#include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/OccupancyGrid.h>
 
@@ -15,21 +16,22 @@ class GridMapper{
 public:
 	GridMapper();
 	~GridMapper();
-	void updateConeMap(Eigen::Vector3d local);
+	void init(Detection detection);
+	void updateConeMap(Eigen::Vector2d cone_position);
+	Eigen::Vector2d convertLocalToGlobal(Candidate cone);
+	geometry_msgs::Point getPoseMsg();
 	nav_msgs::OccupancyGrid getOccupancyGridMap();
-	void initConeMap();
-	void setGridHeight(double height);
-	void setGridResolution(double resolution);
-	void setGridWidth(double width);
 	void setPose(Pose pose);
 private:
 	//Current pose.
 	Pose pose_;
 	//Grid map.
 	std::vector< std::vector<int> > cone_map_;
-	double height_;
-	double resolution_;
-	double width_;
-	std::vector<int> findNextGridElement(double x, double y);
+	//Parameter.
+	Detection detection_;
+	//Helper function.
+	Eigen::Vector2d findGridElement(double x, double y);
+	void initConeMap();
+	void validConeArea(Eigen::Vector2d cone_index);
 };
 #endif

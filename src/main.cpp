@@ -12,6 +12,7 @@
 ros::Publisher candidates_pub;
 ros::Publisher cone_grid_pub;
 ros::Publisher labeled_cloud_pub;
+ros::Publisher position_pub;
 ros::Subscriber cloud_sub;
 ros::Subscriber raw_image_sub;
 ros::Subscriber cones_sub;
@@ -27,19 +28,29 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg);
 void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg);
 void publishCandidates(std::vector <Candidate> xyz_index_vector,
 					   std::vector<cv::Mat> candidates, std::vector<int> candidate_indizes);
-void initConeDetection(ros::NodeHandle* node);
-void initGridMapper(ros::NodeHandle* node);
-void initImageHandler(ros::NodeHandle* node);
-void initLaserDetection(ros::NodeHandle* node);
+void gettingParameter(ros::NodeHandle* node, std::string* candidate_path,
+					  Cone* cone, Detection* detection, Erod* erod);
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "cone_detection");
 	ros::NodeHandle node;
-	//Getting constants and init subcribers and publishers.
-	initConeDetection(&node);
-	initImageHandler(&node);
-	initGridMapper(&node);
-	initLaserDetection(&node);
+	//Getting parameter.
+	std::string candidate_path;
+	Cone cone; Detection detection; Erod erod;
+	gettingParameter(&node,&candidate_path,&cone,&detection,&erod);
+	//Init classes.
+	grid_mapper.init(detection);
+	image_handler.init(candidate_path, cone);
+	cone_detector.init(cone, detection, erod);
+	//Init pubs & subs.
+	candidates_pub = node.advertise<cone_detection::Label>("/candidates", 10);
+	cone_grid_pub = node.advertise<nav_msgs::OccupancyGrid>("/cones_grid", 10);
+	labeled_cloud_pub = node.advertise<sensor_msgs::PointCloud2>("/labeled_points", 10);
+	position_pub = node.advertise<geometry_msgs::Point>("/car_position", 10);
+	cloud_sub = node.subscribe("/velodyne_points", 10, cloudCallback);
+	raw_image_sub = node.subscribe("/usb_cam/image_raw", 10, imageCallback);
+	cones_sub = node.subscribe("/cones", 10, conesCallback);
+	rovio_sub = node.subscribe("/rovio/odometry", 10, rovioCallback);
   	//Spinning.
   	ros::spin();
 	return 0;
@@ -69,15 +80,18 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	//Grid map visualisation.
 	nav_msgs::OccupancyGrid cone_grid = grid_mapper.getOccupancyGridMap();
 	cone_grid_pub.publish(cone_grid);
+	//Pose visualisation.
+	geometry_msgs::Point position = grid_mapper.getPoseMsg();
+	position_pub.publish(position);
 	//Clear vectors.
 	xyz_index_vector.clear();
 }
 
 void conesCallback(const cone_detection::Label::ConstPtr& msg){
 	//Getting coordinates.
-	Eigen::Vector3d local(msg->x, msg->y,0);
+	Eigen::Vector2d cone_position(msg->x, msg->y);
 	//Updating grid map. 
-	grid_mapper.updateConeMap(local);
+	grid_mapper.updateConeMap(cone_position);
 }
 
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg){
@@ -90,17 +104,19 @@ void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg){
 	//Get rovio pose.
 	Pose rovio_pose;
 	geometry_msgs::Pose temp = msg->pose.pose;
-	Eigen::Vector3d temp_position = Eigen::Vector3d(temp.position.x, temp.position.y, 0);
+	Eigen::Vector3d temp_position = Eigen::Vector3d(temp.position.x, temp.position.y, temp.position.z);
 	Eigen::Vector4d temp_orientation = Eigen::Vector4d(temp.orientation.x, temp.orientation.y, 
 											 		   temp.orientation.z, temp.orientation.w);
 	//Transfrom orientation.
 	Eigen::Vector4d init_quat(-0.7818,0.0086,-0.0001,-0.6275);
 	Eigen::Vector4d init_quat_soll(0,0,0,1);	
-	Eigen::Vector4d quat_init_trafo = quat::diffQuaternion(init_quat, init_quat_soll);
-  	rovio_pose.orientation = quat::diffQuaternion(quat_init_trafo, temp_orientation);
+	Eigen::Vector4d quat_init_trafo = quat::diffQuaternion(init_quat_soll, init_quat);
+  	rovio_pose.orientation = quat::diffQuaternion(temp_orientation, quat_init_trafo);
   	//Transform position.
   	temp_position = Eigen::Vector3d(-temp_position(1), temp_position(0), temp_position(2));
-  	Eigen::Vector3d trans_vi_laser(-2.3,0,0);
+  	temp_position(0) *= cos(11.0/180.0*M_PI);
+  	temp_position(1) *= sin(11.0/180.0*M_PI);
+ 	Eigen::Vector3d trans_vi_laser(-2.3,0,0);
 	temp_position += trans_vi_laser;
 	rovio_pose.position = temp_position;
   	//Set pose.
@@ -118,59 +134,30 @@ void publishCandidates(std::vector <Candidate> xyz_index_vector,
 		// Create and publish candidate.
 		cone_detection::Label label_msg;
 		label_msg.image = image_handler.getSensorMsg(candidates[i]);
-		label_msg.x = xyz_index_vector[xyz_index].x;
-		label_msg.y = xyz_index_vector[xyz_index].y;
+		Eigen::Vector2d global_position = grid_mapper.convertLocalToGlobal(xyz_index_vector[xyz_index]);
+		label_msg.x = global_position(0);
+		label_msg.y = global_position(1);
 		label_msg.label = false;
 		candidates_pub.publish(label_msg);
 	}
 }
 
-void initConeDetection(ros::NodeHandle* node){
-	//Subscribing raw sensor cloud and publishing label cloud.
-	candidates_pub = node->advertise<cone_detection::Label>("/candidates", 10);
-	cone_grid_pub = node->advertise<nav_msgs::OccupancyGrid>("/cones_grid", 10);
-	labeled_cloud_pub = node->advertise<sensor_msgs::PointCloud2>("/labeled_points", 10);
-	cloud_sub = node->subscribe("/velodyne_points", 10, cloudCallback);
-	raw_image_sub = node->subscribe("/usb_cam/image_raw", 10, imageCallback);
-	cones_sub = node->subscribe("/cones", 10, conesCallback);
-	rovio_sub = node->subscribe("/rovio/odometry", 10, rovioCallback);
-}
-
-void initGridMapper(ros::NodeHandle* node){
-	double height, resolution, width;
-	node->getParam("/laser/searching_length", height);
-	node->getParam("/laser/searching_resolution", resolution);
-	node->getParam("/laser/searching_width", width);
-	grid_mapper.setGridHeight(height);
-	grid_mapper.setGridResolution(resolution);
-	grid_mapper.setGridWidth(width);
-	grid_mapper.initConeMap();
-}
-
-void initImageHandler(ros::NodeHandle* node){
-	int image_height, image_width;
-	double object_height_pixel, object_width_pixel;
-	std::string candidate_path;
-	node->getParam("/cam/image_height", image_height);
-	node->getParam("/cam/image_width", image_width);
-	node->getParam("/object/height_pixel", object_height_pixel);
-	node->getParam("/object/width_pixel", object_width_pixel);
-	node->getParam("/candidate_path", candidate_path);
-	image_handler.setCandidatePath(candidate_path);
-	image_handler.setObjectConstants(object_height_pixel, object_width_pixel);
-	image_handler.setImageConstants(image_height, image_width);
-}
-
-void initLaserDetection(ros::NodeHandle* node){
-	double intensity_threshold, laser_height, length_to_VI, object_height_meter, searching_width;
-	node->getParam("/laser/intensity_threshold", intensity_threshold);
-	node->getParam("/laser/height", laser_height);
-	node->getParam("/object/height_meter", object_height_meter);
-	node->getParam("/laser/length_to_VI", length_to_VI);
-	node->getParam("/laser/searching_width", searching_width);
-	cone_detector.setIntensityThreshold(intensity_threshold);
-	cone_detector.setLaserHeight(laser_height);
-	cone_detector.setLengthToVI(length_to_VI);
-	cone_detector.setObjectHeight(object_height_meter);
-	cone_detector.setSearchingWidth(searching_width);
+void gettingParameter(ros::NodeHandle* node, std::string* candidate_path,
+					  Cone* cone, Detection* detection, Erod* erod){
+	//Get candidate path.
+	node->getParam("/candidate_path", *candidate_path);
+	//Get cone parameter.
+	node->getParam("/cone/height_meter", cone->height_meter);
+	node->getParam("/cone/height_pixel", cone->height_pixel);
+	node->getParam("/cone/width_pixel", cone->width_pixel);
+	//Get erod parameter.
+	node->getParam("/erod/length_laser_to_VI", erod->length_laser_to_VI);
+	node->getParam("/erod/distance_wheel_axis", erod->distance_wheel_axis);
+	node->getParam("/erod/height_laser", erod->height_laser);
+	//Get detection parameter.
+	node->getParam("/detection/cone_area", detection->cone_area);
+	node->getParam("/detection/searching_length", detection->searching_length);
+	node->getParam("/detection/searching_resolution", detection->searching_resolution);
+	node->getParam("/detection/searching_width", detection->searching_width);	
+	node->getParam("/detection/intensity_threshold", detection->intensity_threshold);
 }

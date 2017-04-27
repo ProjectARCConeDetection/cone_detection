@@ -22,8 +22,8 @@ reload_model = True
 
 # Network parameter.
 rospy.init_node('convolutional network')
-image_width = rospy.get_param('/object/width_pixel')
-image_height = rospy.get_param('/object/height_pixel')
+image_width = rospy.get_param('/cone/width_pixel')
+image_height = rospy.get_param('/cone/height_pixel')
 # Datasets.
 path_to_directory = rospy.get_param('/candidate_path')
 path_to_model = rospy.get_param('/model_path')

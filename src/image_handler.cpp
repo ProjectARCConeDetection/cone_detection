@@ -1,36 +1,16 @@
 #include <cone_detection/image_handler.hpp>
 
-ImageHandler::ImageHandler() : intrisicMat_(3,3,cv::DataType<double>::type), 
-                               rVec_(3,1,cv::DataType<double>::type), 
-                               tVec_(3,1,cv::DataType<double>::type), 
-                               distCoeffs_(5,1,cv::DataType<double>::type){
-    // Intrisic matrix.
-    intrisicMat_.at<double>(0, 0) = 621.701971;
-    intrisicMat_.at<double>(0, 1) = 0;
-    intrisicMat_.at<double>(0, 2) = 325.157695;
-    intrisicMat_.at<double>(1, 0) = 0;
-    intrisicMat_.at<double>(1, 1) = 621.971316;
-    intrisicMat_.at<double>(1, 2) = 233.170431;
-    intrisicMat_.at<double>(2, 0) = 0;
-    intrisicMat_.at<double>(2, 1) = 0;
-    intrisicMat_.at<double>(2, 2) = 1;
-    // Rotation vector.
-    rVec_.at<double>(0) = 0;
-    rVec_.at<double>(1) = 0;
-    rVec_.at<double>(2) = 0;
-    // Translation vector.
-    tVec_.at<double>(0) = 0;
-    tVec_.at<double>(1) = 0;
-    tVec_.at<double>(2) = 0;
-    // Distortion vector.
-    distCoeffs_.at<double>(0) = 0.079264;
-    distCoeffs_.at<double>(1) = -0.149967;
-    distCoeffs_.at<double>(2) = 0.000716;
-    distCoeffs_.at<double>(3) = 0.001749;
-    distCoeffs_.at<double>(4) = 0;
-}
+ImageHandler::ImageHandler(){}
 
 ImageHandler::~ImageHandler(){}
+
+void ImageHandler::init(std::string candidate_path, Cone cone){
+    //Init camera matrices.
+    cam_.initCamMatrices();
+    //Getting parameter.
+    cone_ = cone;
+    candidate_path_ = candidate_path;
+}
 
 void ImageHandler::croppCandidates(std::vector <Candidate> xyz_index_vector){
     //Clear vectors.
@@ -58,14 +38,15 @@ void ImageHandler::croppCandidates(std::vector <Candidate> xyz_index_vector){
             // int x_start = point.x - object_width_/2;
             // int y_start = point.y - object_height_/2;
             int x_start = point.x;
-            int y_start = point.y + object_height_/2;
-            if(x_start < image_width_-object_width_ && x_start > 0 && y_start < image_height_-object_height_ && y_start > 0){ 
+            int y_start = point.y + cone_.height_pixel/2;
+            if(x_start < cam_.image_width-cone_.width_pixel && x_start > 0 
+              && y_start < cam_.image_height-cone_.height_pixel && y_start > 0){ 
                 cv::Mat cropped = croppImage(dst, x_start, y_start);
                 //Push back vectors.
                 candidates_.push_back(cropped);
                 candidate_indizes_.push_back(xyz_index_vector[i].index);
                 //Save and show candidate.
-                std::string name = candidate_path_ + numberToString(xyz_index_vector[i].index) + ".jpg";
+                std::string name = candidate_path_ + "candidates/" + numberToString(xyz_index_vector[i].index) + ".jpg";
                 cv::imwrite(name, cropped);
                 showCandidates(dst, x_start, y_start);
             }
@@ -84,7 +65,7 @@ void ImageHandler::showCandidates(cv::Mat src){
 void ImageHandler::showCandidates(cv::Mat src, int x_start, int y_start){
     cv::Mat src_copy = src.clone();
     cv::Point pt1(x_start, y_start);
-    cv::Point pt2(x_start+object_width_,y_start-object_height_);
+    cv::Point pt2(x_start+cone_.width_pixel,y_start-cone_.height_pixel);
     cv::rectangle(src_copy, pt1, pt2, CV_RGB(255,0,0), 1);
     cv::imshow("Candidates", src_copy);
     cv::waitKey(10);
@@ -93,18 +74,15 @@ void ImageHandler::showCandidates(cv::Mat src, int x_start, int y_start){
 void ImageHandler::transformPointToPixel(){
     //Projecting.
     if(object_points_.size() > 0){
-        cv::projectPoints(object_points_, rVec_, tVec_, intrisicMat_, distCoeffs_, image_points_);
+        cv::projectPoints(object_points_, cam_.rVec, cam_.tVec, cam_.intrisicMat, cam_.distCoeffs, image_points_);
     }
 }
 
-std::vector<cv::Mat> ImageHandler::getCandidateVector(){
-    return candidates_;}
+std::vector<cv::Mat> ImageHandler::getCandidateVector(){return candidates_;}
 
-std::vector<int> ImageHandler::getCandidateIndexVector(){
-    return candidate_indizes_;}
+std::vector<int> ImageHandler::getCandidateIndexVector(){return candidate_indizes_;}
 
-cv_bridge::CvImagePtr ImageHandler::getImagePtr(){
-    return cv_ptr_;}
+cv_bridge::CvImagePtr ImageHandler::getImagePtr(){return cv_ptr_;}
 
 sensor_msgs::Image ImageHandler::getSensorMsg(const cv::Mat base_image){
     cv::Mat temp_image = cv_ptr_->image;
@@ -122,31 +100,19 @@ std::string ImageHandler::numberToString(int number){
 }
 
 cv::Mat ImageHandler::croppImage(cv::Mat src, int x_start, int y_start){
-    cv::Mat cropped(src, cv::Rect(abs(x_start), abs(y_start-object_height_),object_width_,object_height_));
+    cv::Rect rect(abs(x_start), abs(y_start-cone_.height_pixel),
+                  cone_.width_pixel,cone_.height_pixel);
+    cv::Mat cropped(src, rect);
     return cropped;
 }
 
 cv::Mat ImageHandler::rotateImage(double angle){
     cv::Mat dst;
     cv::Mat src = cv_ptr_->image;
-    cv::Point2f pt(image_width_/2., image_height_/2.);
+    cv::Point2f pt(cam_.image_width/2., cam_.image_height/2.);
     cv::Mat rot = cv::getRotationMatrix2D(pt, angle, 1.0);
-    cv::warpAffine(src, dst, rot, cv::Size(image_width_, image_height_));
+    cv::warpAffine(src, dst, rot, cv::Size(cam_.image_width, cam_.image_height));
     return dst;
 }
 
-void ImageHandler::setCandidatePath(std::string candidate_path){
-    candidate_path_ = candidate_path;}
-
-void ImageHandler::setImgPtr(cv_bridge::CvImagePtr cv_ptr){
-    cv_ptr_ = cv_ptr;}
-
-void ImageHandler::setObjectConstants(double height, double width){
-    object_height_ = height;
-    object_width_ = width;
-}
-
-void ImageHandler::setImageConstants(int height, int width){
-    image_height_ = height;
-    image_width_ = width;
-}
+void ImageHandler::setImgPtr(cv_bridge::CvImagePtr cv_ptr){cv_ptr_ = cv_ptr;}

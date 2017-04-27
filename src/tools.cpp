@@ -7,6 +7,41 @@ void Candidate::print(){
     std::cout << "index: " << index << std::endl;
 }
 
+void Cam::initCamMatrices(){
+    // Definition.
+    intrisicMat = cv::Mat(3,3,cv::DataType<double>::type);
+    rVec = cv::Mat(3,1,cv::DataType<double>::type);
+    tVec = cv::Mat(3,1,cv::DataType<double>::type);
+    distCoeffs = cv::Mat(5,1,cv::DataType<double>::type);
+    // Intrisic matrix.
+    intrisicMat.at<double>(0, 0) = 621.701971;
+    intrisicMat.at<double>(0, 1) = 0;
+    intrisicMat.at<double>(0, 2) = 325.157695;
+    intrisicMat.at<double>(1, 0) = 0;
+    intrisicMat.at<double>(1, 1) = 621.971316;
+    intrisicMat.at<double>(1, 2) = 233.170431;
+    intrisicMat.at<double>(2, 0) = 0;
+    intrisicMat.at<double>(2, 1) = 0;
+    intrisicMat.at<double>(2, 2) = 1;
+    // Rotation vector.
+    rVec.at<double>(0) = 0;
+    rVec.at<double>(1) = 0;
+    rVec.at<double>(2) = 0;
+    // Translation vector.
+    tVec.at<double>(0) = 0;
+    tVec.at<double>(1) = 0;
+    tVec.at<double>(2) = 0;
+    // Distortion vector.
+    distCoeffs.at<double>(0) = 0.079264;
+    distCoeffs.at<double>(1) = -0.149967;
+    distCoeffs.at<double>(2) = 0.000716;
+    distCoeffs.at<double>(3) = 0.001749;
+    distCoeffs.at<double>(4) = 0;
+    // Image width and height.
+    image_height = 480;
+    image_width = 640;
+}
+
 Eigen::Vector3d Pose::euler(){
     Eigen::Vector3d euler;
     Eigen::Vector4d quat = orientation;
@@ -27,21 +62,24 @@ Eigen::Vector3d Pose::euler(){
     return euler;
 }
 
-Eigen::Matrix3d Pose::getRotationMatrix(){
-    Eigen::Vector3d angles = euler();   
-    double roll = angles(0);
-    double pitch = angles(1);
-    double yaw = angles(2);
-    //Rotation matrix.
-    Eigen::Matrix3d rotation_matrix;
-    rotation_matrix<<   cos(yaw)*cos(pitch),    cos(yaw)*sin(pitch)*sin(roll)-sin(yaw)*cos(roll),   cos(yaw)*sin(pitch)*cos(roll)+sin(yaw)*sin(roll) ,
-            sin(yaw)*cos(pitch),    sin(yaw)*sin(pitch)*sin(roll)+cos(yaw)*cos(roll),   sin(yaw)*sin(pitch)*cos(roll)-cos(yaw)*sin(roll),
-            -sin(pitch),        cos(pitch)*sin(roll),                       cos(pitch)*cos(roll);
-    return rotation_matrix;
+Eigen::Vector3d Pose::globalToLocal(Eigen::Vector3d global){
+  //Translatation
+  Eigen::Vector3d temp = global - position;
+  //Rotation
+  Eigen::Matrix3d R = transforms::getRotationMatrix(euler());
+  Eigen::Matrix3d T = R.transpose();
+  Eigen::Vector3d local = T*temp;
+  //Change of coordinate frame.
+  //Eigen::Vector3d local_rotated;
+  //local_rotated(0) = -local(1);
+  //local_rotated(1) = local(0);
+  //local_rotated(2) = local(2);
+  //return local_rotated;
+  return local;
 }
 
 Eigen::Vector3d Pose::localToGlobal(const Eigen::Vector3d local){
-    Eigen::Matrix3d R = getRotationMatrix();
+    Eigen::Matrix3d R = transforms::getRotationMatrix(euler());
     Eigen::Vector3d global = R*local;
     return global;
 }
@@ -53,6 +91,21 @@ void Pose::print(){
     std::cout << "Orientation: " << orientation(0) << ", " << orientation(1) << ", " 
               << orientation(2) << ", " << orientation(3) << std::endl; 
 }
+
+namespace transforms{
+
+Eigen::Matrix3d getRotationMatrix(Eigen::Vector3d euler){ 
+    double roll = euler(0);
+    double pitch = euler(1);
+    double yaw = euler(2);
+    //Rotation matrix.
+    Eigen::Matrix3d rotation_matrix;
+    rotation_matrix<<   cos(yaw)*cos(pitch),    cos(yaw)*sin(pitch)*sin(roll)-sin(yaw)*cos(roll),   cos(yaw)*sin(pitch)*cos(roll)+sin(yaw)*sin(roll) ,
+            sin(yaw)*cos(pitch),    sin(yaw)*sin(pitch)*sin(roll)+cos(yaw)*cos(roll),   sin(yaw)*sin(pitch)*cos(roll)-cos(yaw)*sin(roll),
+            -sin(pitch),        cos(pitch)*sin(roll),                       cos(pitch)*cos(roll);
+    return rotation_matrix;
+}
+}//namespace transforms.
 
 namespace quat{
 

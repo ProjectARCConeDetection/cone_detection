@@ -21,6 +21,8 @@ cs_add_library(${PROJECT_NAME}
 	src/image_handler.cpp
     src/laser_detection.cpp
     src/tools.cpp
+    planning/pure_pursuit.cpp
+    planning/tools.cpp
 )
 
 cs_add_executable(main src/main.cpp)

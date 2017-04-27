@@ -1,6 +1,8 @@
 #ifndef TOOLS_CONE_DETECTION_HPP
 #define TOOLS_CONE_DETECTION_HPP
 
+#include "opencv2/core/core.hpp"
+
 #include <eigen3/Eigen/Eigen>
 #include <iostream>
 #include <math.h>
@@ -15,6 +17,37 @@ struct Candidate{
 	void print();
 };
 
+struct Cam{
+	cv::Mat intrisicMat;
+    cv::Mat rVec;
+    cv::Mat tVec;
+    cv::Mat distCoeffs; 
+    int image_height;
+    int image_width;
+    //Functions.
+    void initCamMatrices();
+};
+
+struct Cone{
+	double height_meter;
+	double height_pixel;
+	double width_pixel;
+};
+
+struct Detection{
+	double cone_area;
+	double intensity_threshold;
+	double searching_length;
+	double searching_resolution;
+	double searching_width;
+};
+
+struct Erod{
+	double distance_wheel_axis;
+	double length_laser_to_VI;
+	double height_laser;
+};
+
 struct Pose{
 	//Position.
 	Eigen::Vector3d position;
@@ -22,11 +55,14 @@ struct Pose{
 	Eigen::Vector4d orientation;
 	//Functions.
 	Eigen::Vector3d euler();
-	Eigen::Matrix3d getRotationMatrix();
+	Eigen::Vector3d globalToLocal(Eigen::Vector3d global);
 	Eigen::Vector3d localToGlobal(const Eigen::Vector3d local);
 	void print();
 };
 
+namespace transforms{
+	Eigen::Matrix3d getRotationMatrix(Eigen::Vector3d euler);
+}//namespace transforms.
 namespace quat {
 	Eigen::Vector4d multQuaternion(Eigen::Vector4d q1,Eigen::Vector4d q2);
 	Eigen::Vector4d inverseQuaternion(Eigen::Vector4d quat);
@@ -34,6 +70,6 @@ namespace quat {
 }//namespace quat.
 namespace vector{
 	int getSameIndex(std::vector <Candidate> xyz_index_vector,int index);
-}
+}//namespace vector.
 
 #endif
