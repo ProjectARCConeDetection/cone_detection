@@ -50,17 +50,19 @@ struct Erod{
 
 struct Pose{
 	//Position.
-	Eigen::Vector3d position;
+	Eigen::Vector2d position;
 	//Orientation.
 	Eigen::Vector4d orientation;
 	//Functions.
 	Eigen::Vector3d euler();
-	Eigen::Vector3d globalToLocal(Eigen::Vector3d global);
-	Eigen::Vector3d localToGlobal(const Eigen::Vector3d local);
+	Eigen::Vector2d globalToLocal(Eigen::Vector2d global);
+	Eigen::Vector2d localToGlobal(const Eigen::Vector2d local);
 	void print();
 };
 
 namespace transforms{
+	Eigen::Vector2d to2D(const Eigen::Vector3d input);
+	Eigen::Vector3d to3D(const Eigen::Vector2d input);
 	Eigen::Matrix3d getRotationMatrix(Eigen::Vector3d euler);
 }//namespace transforms.
 namespace quat {

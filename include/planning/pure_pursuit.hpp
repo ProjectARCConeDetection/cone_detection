@@ -12,18 +12,21 @@ class PurePursuit{
 public:
 	PurePursuit();
 	~PurePursuit();
-	void init(Control params);
+	void init(Control control);
 	void calculateControls(Pose pose, double velocity);
-	double calculateSteering(Pose pose, double velocity);
-	double calculateVel(Pose pose, double velocity);
+	void startAutonomousMode(bool mode);
 private:
 	//Current controls.
 	AckermannControl should_controls_;
 	//Reference path.
-	std::vector<Eigen::Vector3d> path_;
+	std::vector<Eigen::Vector2d> path_;
 	//Control parameter.
 	Control control_;
+	//VCU Interface.
+	VCUInterface vcu_;
 	//Helper functions.
+	double calculateSteering(Pose pose, double velocity);
+	double calculateVel(Pose pose, double velocity);
 	double curveRadius();
 };
 

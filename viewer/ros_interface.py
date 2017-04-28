@@ -5,6 +5,7 @@ import numpy as np
 import rospy
 from geometry_msgs.msg import Point
 from nav_msgs.msg import OccupancyGrid
+from std_msgs.msg import Bool
 
 class ROSInterface(QtCore.QObject):
 
@@ -16,6 +17,7 @@ class ROSInterface(QtCore.QObject):
 		#Init ROS.
 		rospy.init_node('cone detection gui')
 		#Define publisher and subscriber.
+		self.mode_pub = rospy.Publisher('mode',Bool, queue_size=10)
 		self.grid_sub = rospy.Subscriber('cones_grid',OccupancyGrid,self.gridCallback, queue_size=10)
 		self.position_sub = rospy.Subscriber('car_position',Point,self.positionCallback, queue_size=10)
 
@@ -46,3 +48,8 @@ class ROSInterface(QtCore.QObject):
 		grid_length = rospy.get_param('/detection/searching_length')
 		grid_width = rospy.get_param('/detection/searching_width')
 		return grid_length, grid_width
+
+	def toAutonomousMode(self):
+		mode_msg = Bool()
+		mode_msg.data = True
+		self.mode_pub.publish(mode_msg)

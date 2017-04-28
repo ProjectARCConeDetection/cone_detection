@@ -62,9 +62,9 @@ Eigen::Vector3d Pose::euler(){
     return euler;
 }
 
-Eigen::Vector3d Pose::globalToLocal(Eigen::Vector3d global){
+Eigen::Vector2d Pose::globalToLocal(Eigen::Vector2d global){
   //Translatation
-  Eigen::Vector3d temp = global - position;
+  Eigen::Vector3d temp = transforms::to3D(global - position);
   //Rotation
   Eigen::Matrix3d R = transforms::getRotationMatrix(euler());
   Eigen::Matrix3d T = R.transpose();
@@ -75,24 +75,40 @@ Eigen::Vector3d Pose::globalToLocal(Eigen::Vector3d global){
   //local_rotated(1) = local(0);
   //local_rotated(2) = local(2);
   //return local_rotated;
-  return local;
+  //Convert to 2D.
+  Eigen::Vector2d local_2D = transforms::to2D(local);
+  return local_2D;
 }
 
-Eigen::Vector3d Pose::localToGlobal(const Eigen::Vector3d local){
+Eigen::Vector2d Pose::localToGlobal(const Eigen::Vector2d local){
+    //Convert to 3D.
+    Eigen::Vector3d local_3D = transforms::to3D(local);
+    //Rotate.
     Eigen::Matrix3d R = transforms::getRotationMatrix(euler());
-    Eigen::Vector3d global = R*local;
-    return global;
+    Eigen::Vector3d global = R*local_3D;
+    //Convert to 2D.
+    Eigen::Vector2d global_2D = transforms::to2D(global);
+    return global_2D;
 }
 
 void Pose::print(){
     std::cout << "---------------------------" << std::endl;
-    std::cout << "Position: " << position(0) << ", " << position(1) << ", " 
-              << position(2) << std::endl; 
+    std::cout << "Position: " << position(0) << ", " << position(1) << std::endl;
     std::cout << "Orientation: " << orientation(0) << ", " << orientation(1) << ", " 
               << orientation(2) << ", " << orientation(3) << std::endl; 
 }
 
 namespace transforms{
+
+Eigen::Vector2d to2D(const Eigen::Vector3d input){
+    Eigen::Vector2d output(input(0),input(1));
+    return output;
+}
+
+Eigen::Vector3d to3D(const Eigen::Vector2d input){
+    Eigen::Vector3d output(input(0),input(1),0);
+    return output;
+}
 
 Eigen::Matrix3d getRotationMatrix(Eigen::Vector3d euler){ 
     double roll = euler(0);

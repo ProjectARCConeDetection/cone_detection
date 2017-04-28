@@ -25,8 +25,11 @@ cs_add_library(${PROJECT_NAME}
     planning/tools.cpp
 )
 
-cs_add_executable(main src/main.cpp)
-target_link_libraries(main ${catkin_LIBRARIES} ${PROJECT_NAME})
+cs_add_executable(cone_detector src/main.cpp)
+target_link_libraries(cone_detector ${catkin_LIBRARIES} ${PROJECT_NAME})
+
+cs_add_executable(path_planner planning/main.cpp)
+target_link_libraries(path_planner ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 cs_install()
 cs_export()

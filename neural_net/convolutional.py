@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+from __future__ import division, print_function
 
 from net import *
 
@@ -16,9 +16,8 @@ import tensorflow as tf
 # Training parameter.
 learning_rate = 0.01
 training_iters = 10000
-display_step = 100
-toolbar_length = training_iters/100
-reload_model = True
+display_step = training_iters/5
+reload_model = False
 
 # Network parameter.
 rospy.init_node('convolutional network')
@@ -28,12 +27,6 @@ image_height = rospy.get_param('/cone/height_pixel')
 path_to_directory = rospy.get_param('/candidate_path')
 path_to_model = rospy.get_param('/model_path')
 datasets = rospy.get_param('/neural_net/datasets')
-
-def evaluation(result):
-    print("Result: ", result)
-    if result[0] > result[1]: max_name = "Cone"
-    else: max_name = "None"
-    print("Prediction: ", max_name)
 
 def getBatch(train_X, train_Y):
     length = len(train_X)-1
@@ -68,6 +61,7 @@ def getTrainingData():
     labeled_list = labeled_list[0]
     shuffle(labeled_list)
     # Getting training data.
+    positive = 0; negative = 0;
     for data in labeled_list:
         path = path_to_directory + data[2] + "/" + str(data[0]) + ".jpg"
         img = getImageFromPath(path)
@@ -75,8 +69,11 @@ def getTrainingData():
         train_X.append(img)
         if label: 
             train_Y.append(np.array([1,0]))
+            positive += 1
         else: 
             train_Y.append(np.array([0,1]))
+            negative += 1
+    print("Length of data sets: %f with %f positive and %f negatives !" % (len(labeled_list),positive,negative))
     return train_X, train_Y
 
 # Training data.
@@ -102,23 +99,32 @@ with tf.Session() as sess:
     # Training network.
     if(reload_model): 
         saver.restore(sess, path_to_model + getModelName(datasets) +" .cpkt")
-        print("Restored model !")
+        print("\nRestored model ! \n")
     else:
-        print("Optimizing")
-        sys.stdout.write("[%s]" % (" " * (training_iters/toolbar_length)))
-        sys.stdout.flush()
-        sys.stdout.write("\b" * (training_iters/toolbar_length+1))
+        print("\nOptimizing with %f steps" % training_iters)
         while (step < training_iters and not reload_model):
             batch_x, batch_y = getBatch(train_X, train_Y)
             sess.run(optimizer, feed_dict={X: batch_x, Y: batch_y})
-            if(step%toolbar_length == 0):
-                sys.stdout.write("-")
-                sys.stdout.flush()
             step += 1
+            if(step%display_step == 0): print("Progress: %f " % (step/training_iters))
         save_path = saver.save(sess, path_to_model + getModelName(datasets) +" .cpkt")
-        print("\n Optimization Finished!")
+        print("Optimization Finished! \n")
     #Testing network.
-    random_image = train_X[randint(1,len(train_X)-1)]
-    img = Image.fromarray(random_image,'RGB')
-    img.show()
-    evaluation(pred.eval(feed_dict={X: random_image})[0])
+    positive = 0; valid = 0
+    test_iterations = 200
+    for iteration in range(0,test_iterations):
+        #Get random data.
+        random_int = randint(1,len(train_X)-1)
+        random_image = train_X[random_int]
+        random_label = train_Y[random_int]
+        img = Image.fromarray(random_image,'RGB')
+        #Predict random.
+        evaluation = pred.eval(feed_dict={X: random_image})[0]
+        prediction = (evaluation[0] > evaluation[1])
+        groundtruth = bool(random_label[0])
+        if(prediction == groundtruth): valid += 1
+        if(prediction): positive += 1
+    print("Testing %f data " % test_iterations)
+    print("Positives: %f " % positive)
+    print("Accuracy: %f !" % (valid/test_iterations))
+

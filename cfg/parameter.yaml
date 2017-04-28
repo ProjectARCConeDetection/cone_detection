@@ -36,17 +36,18 @@ detection/searching_resolution: 0.1 #Grid resolution.
 detection/searching_width: 3.0 #y-Range for searching.
 detection/intensity_threshold: 90 #Minimal intensity of detected objects.
 #Neural Net.
-neural_net/datasets: ['biberist_evening']
+neural_net/datasets: ['biberist_20_4']
 #Paths.
 candidate_path: '/home/sele/candidates/' #Path to candidate images.
 model_path: '/home/sele/models/' #Path to trained models.
-#Planning.
-planning/distance_interpolation: 3 #Distance of three points for curvature calculation.
-planning/K1_LAD_S: 1.1 #Dynamic part for look ahead distance steer.
-planning/K2_LAD_S: 0 #Static part for look ahead distance steer.
-planning/K1_LAD_V: 0.5 #Dynamic part for lad radius for velocity.
-planning/K2_LAD_V: 0 #Dynamic part for lad radius for velocity reference.
-planning/upperbound_lad_s: 7.3 #Empyrisch getestet
-planning/lowerbound_lad_s: 3  #Empyrisch getestet
-planning/max_absolute_velocity: 10 #[m/s], maximal velocity.
-planning/max_lateral_acceleration: 4 #[m/s²], maximal lateral acceleration.
+#Control.
+control/distance_interpolation: 3 #Distance of three points for curvature calculation.
+control/K1_LAD_S: 1.1 #Dynamic part for look ahead distance steer.
+control/K2_LAD_S: 0 #Static part for look ahead distance steer.
+control/K1_LAD_V: 0.5 #Dynamic part for lad radius for velocity.
+control/K2_LAD_V: 0 #Dynamic part for lad radius for velocity reference.
+control/upperbound_lad_s: 7.3 #Empyrisch getestet
+control/lowerbound_lad_s: 3  #Empyrisch getestet
+control/max_absolute_velocity: 10 #[m/s], maximal velocity.
+control/max_lateral_acceleration: 4 #[m/s²], maximal lateral acceleration.
+control/max_steering_angle: 25 #[deg] +-° steering wheel impact.

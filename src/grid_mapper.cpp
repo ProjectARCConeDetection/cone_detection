@@ -6,7 +6,7 @@ GridMapper::~GridMapper(){}
 
 void GridMapper::init(Detection detection){
 	//Init pose.
-	pose_.position = Eigen::Vector3d(0,0,0);
+	pose_.position = Eigen::Vector2d(0,0);
 	pose_.orientation = Eigen::Vector4d(0,0,0,1);
 	//Set grid parameter.
 	detection_ = detection;
@@ -24,9 +24,9 @@ void GridMapper::updateConeMap(Eigen::Vector2d cone_position){
 }
 
 Eigen::Vector2d GridMapper::convertLocalToGlobal(Candidate cone){
-	Eigen::Vector3d local(cone.x, cone.y, 0);
+	Eigen::Vector2d local(cone.x, cone.y);
 	//Transform local to global vector.
-	Eigen::Vector3d delta_global = pose_.localToGlobal(local);
+	Eigen::Vector2d delta_global = pose_.localToGlobal(local);
 	//Find global position.
 	double x = pose_.position(0) + delta_global(0);
 	double y = pose_.position(1) + delta_global(1);

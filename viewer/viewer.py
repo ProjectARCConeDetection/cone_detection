@@ -22,7 +22,9 @@ class GUI(QtGui.QWidget):
 	def initUI(self):
 		self.setWindowTitle('ARC Cone Detection')
 		#Define layouts.
-		layout = QtGui.QHBoxLayout() 
+		left_layout = QtGui.QHBoxLayout() 
+		right_up_layout = QtGui.QHBoxLayout()
+		right_down_layout = QtGui.QHBoxLayout()
 		#Get grid area.
 		grid_length, grid_width = self.ros_interface.getSearchingArea()
 		#Path plot.
@@ -31,8 +33,18 @@ class GUI(QtGui.QWidget):
 		self.plotwidget.addItem(self.plotcurve)
 		self.plotwidget.setYRange(-grid_width*0.75, grid_width*0.75)
 		self.plotwidget.setXRange(0,grid_length)
-		layout.addWidget(self.plotwidget)
+		left_layout.addWidget(self.plotwidget)
+		#Start button.
+		self.start_button = QtGui.QPushButton("System Booting")
+		self.start_button.setFont(QtGui.QFont('SansSerif',15,weight=QtGui.QFont.Bold))
+		self.start_button.setStyleSheet("background-color: yellow")
+		self.start_button.setFixedSize(self.width/4,self.height/8)
+		right_down_layout.addWidget(self.start_button)
 		#Set layouts.
+		layout = QtGui.QGridLayout()
+		layout.addLayout(left_layout, 0, 0, 3, 3)
+		layout.addLayout(right_up_layout, 0, 3, 2, 1)
+		layout.addLayout(right_down_layout, 2, 2)
 		self.setLayout(layout)
 		#Set Window geometry and background color.
 		palette = QtGui.QPalette()
@@ -42,10 +54,17 @@ class GUI(QtGui.QWidget):
 		self.show()
 
 	def qtConnections(self):
+		#Start button.
+		self.start_button.clicked.connect(self.changeMode)
 		#Cone grid.
 		self.ros_interface.grid_signal.connect(self.updateGrid)
 		#Position.
 		self.ros_interface.position_signal.connect(self.updatePosition)
+
+	def changeMode(self):
+		self.ros_interface.toAutonomousMode()
+		self.start_button.setStyleSheet("background-color: blue")
+		self.start_button.setText("System started") 
 
 	def updateGrid(self, cones):
 		#Get position.

@@ -5,7 +5,7 @@
   <rosparam command="load" file="$(find cone_detection)/cfg/parameter.yaml" />
 
   <!-- CONE DETECTION -->
-  <node name="main" pkg="cone_detection" type="main" output="screen" />
+  <node name="cone_detector" pkg="cone_detection" type="cone_detector" output="screen" />
   <node name="cone_eval" pkg="cone_detection" type="cone_eval.py" output="screen" />
   <node name="viewer" pkg="cone_detection" type="viewer.py" output="screen" />
 

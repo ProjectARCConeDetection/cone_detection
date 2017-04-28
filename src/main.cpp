@@ -32,7 +32,7 @@ void gettingParameter(ros::NodeHandle* node, std::string* candidate_path,
 					  Cone* cone, Detection* detection, Erod* erod);
 
 int main(int argc, char** argv){
-	ros::init(argc, argv, "cone_detection");
+	ros::init(argc, argv, "cone_detector");
 	ros::NodeHandle node;
 	//Getting parameter.
 	std::string candidate_path;
@@ -118,9 +118,10 @@ void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg){
   	temp_position(1) *= sin(11.0/180.0*M_PI);
  	Eigen::Vector3d trans_vi_laser(-2.3,0,0);
 	temp_position += trans_vi_laser;
-	rovio_pose.position = temp_position;
+	rovio_pose.position = transforms::to2D(temp_position);
   	//Set pose.
   	grid_mapper.setPose(rovio_pose);
+  	//TODO: Test which angle is theta (2D space angle) --> simple u turn.
 }
 
 void publishCandidates(std::vector <Candidate> xyz_index_vector,
