@@ -36,7 +36,7 @@ detection/searching_resolution: 0.1 #Grid resolution.
 detection/searching_width: 3.0 #y-Range for searching.
 detection/intensity_threshold: 90 #Minimal intensity of detected objects.
 #Neural Net.
-neural_net/datasets: ['biberist_20_4']
+neural_net/datasets: ['biberist_evening']
 #Paths.
 candidate_path: '/home/sele/candidates/' #Path to candidate images.
 model_path: '/home/sele/models/' #Path to trained models.

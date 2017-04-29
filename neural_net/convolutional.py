@@ -15,7 +15,7 @@ import tensorflow as tf
 
 # Training parameter.
 learning_rate = 0.001
-training_iters = 100000
+training_iters = 1000
 test_iterations = 200
 display_step = training_iters/20
 reload_model = False
@@ -51,8 +51,6 @@ def getBatch(train_X, train_Y):
     length = len(train_X)-1
     i = randint(0,length)
     x = train_X[i]; y = train_Y[i]
-    #Shorten list.
-    train_X.pop(i); train_Y.pop(i)
     return x,y
 
 def getImageFromPath(path):
@@ -106,7 +104,7 @@ X = tf.placeholder(tf.float32, [image_height,image_width,3])
 Y = tf.placeholder(tf.float32, [2,])
 
 # Construct model.
-pred = conv_net(X, image_height, image_width, 2)
+pred = conv_net(X, image_height, image_width, 2, train=True)
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=Y))
 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
@@ -124,10 +122,8 @@ with tf.Session() as sess:
         print("\nRestored model ! \n")
     else:
         print("\nOptimizing with %f steps" % training_iters)
-        train_x = train_X
-        train_y = train_Y
         while (step < training_iters and not reload_model):
-            batch_x, batch_y = getBatch(train_x, train_y)
+            batch_x, batch_y = getBatch(train_X, train_Y)
             sess.run(optimizer, feed_dict={X: batch_x, Y: batch_y})
             step += 1
             if(step%display_step == 0): 
