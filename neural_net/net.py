@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 #Definition of neural nets.
-def conv_net(x, image_height, image_width, n_classes, train=False): 
+def conv_net(x, image_height, image_width, n_classes): 
     # Reshape input picture.
     x = tf.reshape(x, shape=[-1,image_height,image_width,3])
     # First Convolutional Layer.

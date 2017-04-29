@@ -14,11 +14,12 @@ import sys
 import tensorflow as tf
 
 # Training parameter.
-learning_rate = 0.001
-training_iters = 1000
-test_iterations = 200
+learning_rate = 0.01
+training_iters = 10000
+test_iterations = 20
 display_step = training_iters/20
 reload_model = False
+equalising = True
 
 # Network parameter.
 rospy.init_node('convolutional network')
@@ -29,22 +30,52 @@ path_to_directory = rospy.get_param('/candidate_path')
 path_to_model = rospy.get_param('/model_path')
 datasets = rospy.get_param('/neural_net/datasets')
 
+
+def equaliseSet(set_X, set_Y):
+    #Count positives and negatives.
+    positives = 0; negatives = 0;
+    for element in set_Y:
+        if(element[0]): positives += 1
+        else: negatives += 1 
+    #Find bias.
+    negative_bias = (negatives > (len(set_X)/2))
+    if(negative_bias): counter = positives
+    if(not negative_bias): counter = negatives
+    #Equalise.
+    equalised_x = []; equalised_y = [];
+    for index in range(0, len(set_X)-1):
+        if(counter <= 0 and negative_bias and set_Y[index][1]): continue
+        if(counter <= 0 and not negative_bias and set_Y[index][0]): continue
+        equalised_x.append(set_X[index])
+        equalised_y.append(set_Y[index])
+        if(negative_bias and set_Y[index][1]): counter -= 1
+        if(not negative_bias and set_Y[index][0]): counter -= 1
+    return equalised_x, equalised_y
+
 def getAccuracy(train_X, train_Y):
-    positive = 0; valid = 0
-    for iteration in range(0,test_iterations):
-        #Get random data.
+    positive = 0; valid = 0; negatives = 0;
+    iteration = 0
+    test_x = []; test_y = [];
+    #Get random data.
+    while iteration < test_iterations:
         random_int = randint(1,len(train_X)-1)
-        random_image = train_X[random_int]
-        random_label = train_Y[random_int]
-        img = Image.fromarray(random_image,'RGB')
-        #Predict random.
+        test_x.append(train_X[random_int])
+        test_y.append(train_Y[random_int])
+        iteration += 1
+    #Equalise dataset.
+    test_x, test_y = equaliseSet(test_x, test_y)
+    #Predict random.
+    valid = 0
+    length = len(test_x)-1
+    for index in range(0, length):
+        random_image = test_x[index]
+        random_label = test_y[index]
         evaluation = pred.eval(feed_dict={X: random_image})[0]
         prediction = (evaluation[0] > evaluation[1])
         groundtruth = bool(random_label[0])
         if(prediction == groundtruth): valid += 1
-        if(prediction): positive += 1
-    accuracy = valid/test_iterations
-    return accuracy, positive
+    accuracy = valid/length
+    return accuracy
 
 def getBatch(train_X, train_Y):
     #Get random list element.
@@ -93,8 +124,14 @@ def getTrainingData():
         else: 
             train_Y.append(np.array([0,1]))
             negative += 1
-    print("Length of data sets: %f with %f positive and %f negatives !" % (len(labeled_list),positive,negative))
-    return train_X, train_Y
+    # Not equalising.
+    if(not equalising):
+        print("Length of data sets: %f with %f positive and %f negatives !" % (len(labeled_list),positive,negative))
+        return train_X, train_Y
+    # Equalise dataset.
+    equalised_x, equalised_y = equaliseSet(train_X, train_Y)
+    print("Lenght of data sets: %f, equalised !" % len(equalised_x))
+    return equalised_x, equalised_y
 
 # Training data.
 train_X, train_Y = getTrainingData()
@@ -104,7 +141,7 @@ X = tf.placeholder(tf.float32, [image_height,image_width,3])
 Y = tf.placeholder(tf.float32, [2,])
 
 # Construct model.
-pred = conv_net(X, image_height, image_width, 2, train=True)
+pred = conv_net(X, image_height, image_width, 2)
 # Define loss and optimizer
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=Y))
 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
@@ -127,13 +164,12 @@ with tf.Session() as sess:
             sess.run(optimizer, feed_dict={X: batch_x, Y: batch_y})
             step += 1
             if(step%display_step == 0): 
-                accuracy, positive = getAccuracy(train_X, train_Y)
+                accuracy = getAccuracy(train_X, train_Y)
                 print("Progress: %f with Accuracy %f" % (step/training_iters, accuracy))
         save_path = saver.save(sess, path_to_model + getModelName(datasets) +" .cpkt")
         print("Optimization Finished! \n")
     #Testing network.
-    accuracy, positive = getAccuracy(train_X, train_Y)
+    accuracy = getAccuracy(train_X, train_Y)
     print("Testing %f data " % test_iterations)
-    print("Positives: %f " % positive)
     print("Accuracy: %f !" % accuracy)
 
