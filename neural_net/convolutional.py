@@ -14,9 +14,10 @@ import sys
 import tensorflow as tf
 
 # Training parameter.
-learning_rate = 0.01
-training_iters = 10000
-display_step = training_iters/5
+learning_rate = 0.001
+training_iters = 100000
+test_iterations = 200
+display_step = training_iters/20
 reload_model = False
 
 # Network parameter.
@@ -28,10 +29,31 @@ path_to_directory = rospy.get_param('/candidate_path')
 path_to_model = rospy.get_param('/model_path')
 datasets = rospy.get_param('/neural_net/datasets')
 
+def getAccuracy(train_X, train_Y):
+    positive = 0; valid = 0
+    for iteration in range(0,test_iterations):
+        #Get random data.
+        random_int = randint(1,len(train_X)-1)
+        random_image = train_X[random_int]
+        random_label = train_Y[random_int]
+        img = Image.fromarray(random_image,'RGB')
+        #Predict random.
+        evaluation = pred.eval(feed_dict={X: random_image})[0]
+        prediction = (evaluation[0] > evaluation[1])
+        groundtruth = bool(random_label[0])
+        if(prediction == groundtruth): valid += 1
+        if(prediction): positive += 1
+    accuracy = valid/test_iterations
+    return accuracy, positive
+
 def getBatch(train_X, train_Y):
+    #Get random list element.
     length = len(train_X)-1
     i = randint(0,length)
-    return train_X[i], train_Y[i]
+    x = train_X[i]; y = train_Y[i]
+    #Shorten list.
+    train_X.pop(i); train_Y.pop(i)
+    return x,y
 
 def getImageFromPath(path):
     img = Image.open(path)
@@ -102,29 +124,20 @@ with tf.Session() as sess:
         print("\nRestored model ! \n")
     else:
         print("\nOptimizing with %f steps" % training_iters)
+        train_x = train_X
+        train_y = train_Y
         while (step < training_iters and not reload_model):
-            batch_x, batch_y = getBatch(train_X, train_Y)
+            batch_x, batch_y = getBatch(train_x, train_y)
             sess.run(optimizer, feed_dict={X: batch_x, Y: batch_y})
             step += 1
-            if(step%display_step == 0): print("Progress: %f " % (step/training_iters))
+            if(step%display_step == 0): 
+                accuracy, positive = getAccuracy(train_X, train_Y)
+                print("Progress: %f with Accuracy %f" % (step/training_iters, accuracy))
         save_path = saver.save(sess, path_to_model + getModelName(datasets) +" .cpkt")
         print("Optimization Finished! \n")
     #Testing network.
-    positive = 0; valid = 0
-    test_iterations = 200
-    for iteration in range(0,test_iterations):
-        #Get random data.
-        random_int = randint(1,len(train_X)-1)
-        random_image = train_X[random_int]
-        random_label = train_Y[random_int]
-        img = Image.fromarray(random_image,'RGB')
-        #Predict random.
-        evaluation = pred.eval(feed_dict={X: random_image})[0]
-        prediction = (evaluation[0] > evaluation[1])
-        groundtruth = bool(random_label[0])
-        if(prediction == groundtruth): valid += 1
-        if(prediction): positive += 1
+    accuracy, positive = getAccuracy(train_X, train_Y)
     print("Testing %f data " % test_iterations)
     print("Positives: %f " % positive)
-    print("Accuracy: %f !" % (valid/test_iterations))
+    print("Accuracy: %f !" % accuracy)
 

@@ -4,15 +4,15 @@ import tensorflow as tf
 def conv_net(x, image_height, image_width, n_classes):
     # Store layers weight & bias.
     weights = {
-        'wc1': tf.Variable(tf.random_normal([5, 5, 3, 16])),
-        'wc2': tf.Variable(tf.random_normal([5, 5, 16, 32])),
-        'fc1': tf.Variable(tf.random_normal([5*39*32, 1024])),
+        'wc1': tf.Variable(tf.random_normal([10, 10, 3, 32])),
+        'wc2': tf.Variable(tf.random_normal([10, 10, 32, 64])),
+        'fc1': tf.Variable(tf.random_normal([10*39*32, 1024])),
         'out': tf.Variable(tf.random_normal([1024, n_classes]))
     }
 
     biases = {
-        'bc1': tf.Variable(tf.random_normal([16])),
-        'bc2': tf.Variable(tf.random_normal([32])),
+        'bc1': tf.Variable(tf.random_normal([32])),
+        'bc2': tf.Variable(tf.random_normal([64])),
         'fc1': tf.Variable(tf.random_normal([1024])),
         'out': tf.Variable(tf.random_normal([n_classes]))
     }   
