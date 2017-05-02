@@ -51,7 +51,8 @@ class NeuralNet:
 
 	def labeling(self,msg):
 		#Get image.
-		image = convertMsgToArray(msg.image)
+        image = np.zeros((1,image_height,image_width,3))
+		image[0][:][:][:] =  convertMsgToArray(msg.image)
 		#Labeling.
 		label = self.pred.eval(session=self.sess,feed_dict={self.X: image})[0]
 		if(label[0] > label[1]):

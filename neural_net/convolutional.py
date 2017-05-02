@@ -15,7 +15,8 @@ import tensorflow as tf
 
 # Training parameter.
 learning_rate = 0.01
-training_iters = 10000
+training_iters = 1000
+batch_size = 50
 test_iterations = 20
 display_step = training_iters/20
 reload_model = False
@@ -29,7 +30,6 @@ image_height = rospy.get_param('/cone/height_pixel')
 path_to_directory = rospy.get_param('/candidate_path')
 path_to_model = rospy.get_param('/model_path')
 datasets = rospy.get_param('/neural_net/datasets')
-
 
 def equaliseSet(set_X, set_Y):
     #Count positives and negatives.
@@ -68,7 +68,8 @@ def getAccuracy(train_X, train_Y):
     valid = 0
     length = len(test_x)-1
     for index in range(0, length):
-        random_image = test_x[index]
+        random_image = np.zeros((1,image_height,image_width,3))
+        random_image[0][:][:][:] =  test_x[index]
         random_label = test_y[index]
         evaluation = pred.eval(feed_dict={X: random_image})[0]
         prediction = (evaluation[0] > evaluation[1])
@@ -80,9 +81,13 @@ def getAccuracy(train_X, train_Y):
 def getBatch(train_X, train_Y):
     #Get random list element.
     length = len(train_X)-1
-    i = randint(0,length)
-    x = train_X[i]; y = train_Y[i]
-    return x,y
+    batch_x = np.zeros((batch_size,image_height, image_width,3))
+    batch_y = np.zeros((batch_size,2))
+    for index in range(0,batch_size-1):
+        i = randint(0,length)
+        batch_x[index][:][:][:] = train_X[i]
+        batch_y[index][:][:][:] = train_Y[i]
+    return batch_x,batch_y
 
 def getImageFromPath(path):
     img = Image.open(path)
@@ -137,8 +142,8 @@ def getTrainingData():
 train_X, train_Y = getTrainingData()
 
 # tf Graph input.
-X = tf.placeholder(tf.float32, [image_height,image_width,3])
-Y = tf.placeholder(tf.float32, [2,])
+X = tf.placeholder(tf.float32, [None,image_height,image_width,3])
+Y = tf.placeholder(tf.float32, [None,2,])
 
 # Construct model.
 pred = conv_net(X, image_height, image_width, 2)
