@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>	
+	
+<launch>
+
+  <rosparam command="load" file="$(find cone_detection)/cfg/parameter.yaml" />
+
+  <!-- Fully Connected -->
+  <node name="fully_connected" pkg="cone_detection" type="fully_connected.py" output="screen" />
+
+</launch>
+
