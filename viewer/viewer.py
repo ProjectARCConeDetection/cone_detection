@@ -7,12 +7,23 @@ import sys
 
 from ros_interface import ROSInterface
 
+def getPointsFromList(x_points,y_points):
+	#Compare list length.
+	if(len(x_points) != len(y_points)): print("Error in getPointsFromList !")
+	#Write to single arrays.
+	points = []
+	for index in range(0, len(x_points)-1):
+		points.append([x_points[i],y_points[i]])
+	return points
+
 class GUI(QtGui.QWidget):
 	def __init__(self):
 		super(GUI, self).__init__()
 		#UI parameter.
 		self.height = 600
 		self.width = 1000
+		#Graph list.
+		graph_points = []
 		#Init ROSInterface.
 		self.ros_interface = ROSInterface()
 		#Build up UI.
@@ -60,6 +71,8 @@ class GUI(QtGui.QWidget):
 		self.ros_interface.grid_signal.connect(self.updateGrid)
 		#Position.
 		self.ros_interface.position_signal.connect(self.updatePosition)
+		#Trajectory.
+		self.ros_interface.trajectory_signal.connect(self.updateTrajectory)
 
 	def changeMode(self):
 		self.ros_interface.toAutonomousMode()
@@ -67,18 +80,32 @@ class GUI(QtGui.QWidget):
 		self.start_button.setText("System started") 
 
 	def updateGrid(self, cones):
-		#Get position.
+		#Get cone position.
 		cones_x = []; cones_y = []
 		for element in cones:
 			cones_x.append(element[0])
 			cones_y.append(element[1])
 		#Add cone points to graph.
 		self.plotcurve.addPoints(cones_x, cones_y, symbol='x', pen=QtGui.QPen(QtGui.QColor(255, 255, 255)))
+		#Update point list.
+		graph_points.append(getPointsFromList(cones_x, cones_y))
 
 	def updatePosition(self, position):
-		x = [position[0]]
-		y = [position[1]]
+		#Get car position and add points to graph.
+		x = [position[0]]; y = [position[1]]
 		self.plotcurve.addPoints(x, y, symbol='o', pen=QtGui.QPen(QtGui.QColor(255, 0, 0)))
+		#Update point list.
+		graph_points.append(getPointsFromList(x, y))
+
+	def updateTrajectory(self, trajectory):
+		#Get path points.
+		points = []
+		points.append(getPointsFromList(trajectory[0],trajectory[1]))
+		points.append(graph_points)
+		x = [points[0]]; y = [points[1]]
+		#Replot graph.
+		self.plotcurve.clear()
+		self.plotcurve.addPoints(x, y, symbol='o', pen=QtGui.QPen(QtGui.QColor(0, 255, 0)))
 
 def main():
 	#Starting application.
