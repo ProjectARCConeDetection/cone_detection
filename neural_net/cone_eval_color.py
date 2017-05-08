@@ -5,25 +5,22 @@ import os
 import numpy as np
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
-import tensorflow as tf
 
 import rospy
 from cone_detection.msg import Label
 from sensor_msgs.msg import Image
 
 #Init ros.
-rospy.init_node('cone_eval')
+rospy.init_node('cone_eval_color')
 #Net parameters.
 path_to_candidate = rospy.get_param('/candidate_path')
-path_to_model = rospy.get_param('/model_path')
 image_width = rospy.get_param('/cone/width_pixel')
 image_height = rospy.get_param('/cone/height_pixel')
-datasets = rospy.get_param('/neural_net/datasets')
 
 def convertMsgToArray(image):
 	bridge = CvBridge()
 	try:
-		image_array = bridge.imgmsg_to_cv2(image, "bgr8")
+		image_array = bridge.imgmsg_to_cv2(image, "rgb8")
 	except CvBridgeError as error:
 		print(error)
 	return image_array
@@ -34,15 +31,6 @@ def deleteFolderContent(path):
 
 class NeuralNet:
 	def __init__(self):
-		#Init and saver variable.
-		self.X = tf.placeholder(tf.float32, [None,image_height,image_width,3])
-		self.Y = tf.placeholder(tf.float32, [None,2])
-		self.keep_prob = tf.placeholder(tf.float32)
-		self.pred = conv_without_contrib(self.X, image_height, image_width, 2, self.keep_prob)
-		self.sess = tf.Session()
-		self.init = tf.global_variables_initializer().run(session=self.sess)
-		self.saver = tf.train.Saver()
-		self.saver.restore(self.sess, path_to_model + getModelName(datasets) +" .cpkt")
 		#Init publisher and subscriber.
 		rospy.Subscriber('/candidates', Label, self.labeling, queue_size=10)
 		self.cones_pub = rospy.Publisher('/cones', Label, queue_size=10)
@@ -52,15 +40,20 @@ class NeuralNet:
 
 	def labeling(self,msg):
 		#Get image.
-		image = np.zeros((1,image_height, image_width,3))
-		image[0][:][:][:] =  convertMsgToArray(msg.image)
-		#Labeling.
-		label = self.pred.eval(session=self.sess,feed_dict={self.X: image, self.keep_prob: 1.0})[0]
-		# if(label[0] > label[1]):
-		if(True):
+		image = convertMsgToArray(msg.image)
+		#Convert to hsv.
+		hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+		#Define color boundaries (hsv - Farbwert, Saettigung, Hellwert).
+		lower = np.array([115,50,50])
+		upper = np.array([130,255,255])
+		#Find colors in bounds and apply mask.
+		mask = cv2.inRange(hsv, lower, upper)
+ 		output = cv2.bitwise_and(image, image, mask = mask)
+		if(np.linalg.norm(mask) > 2000.0):
 			msg.label = True
 			self.cone_counter += 1
-			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg", convertMsgToArray(msg.image))
+			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg", image)
+			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + "_mask.jpg", mask)
 			self.cones_pub.publish(msg)
 #------------------------------------------------------------------------
 
