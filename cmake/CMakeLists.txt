@@ -21,16 +21,19 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Label.msg
+  Path.msg
 )
 
 generate_messages(
   DEPENDENCIES
   sensor_msgs
+  std_msgs
 )
 
 catkin_package(CATKIN_DEPENDS 
 	message_runtime
 	sensor_msgs
+  std_msgs
 )
 
 #include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})

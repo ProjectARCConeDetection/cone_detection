@@ -23,7 +23,8 @@ class GUI(QtGui.QWidget):
 		self.height = 600
 		self.width = 1000
 		#Graph list.
-		graph_points = []
+		self.graph_points_x = []; self.graph_points_y = []
+		self.cones_x = []; self.cones_y = []
 		#Init ROSInterface.
 		self.ros_interface = ROSInterface()
 		#Build up UI.
@@ -42,8 +43,11 @@ class GUI(QtGui.QWidget):
 		self.plotwidget = pg.PlotWidget()
 		self.plotcurve = pg.ScatterPlotItem()
 		self.plotwidget.addItem(self.plotcurve)
-		self.plotwidget.setYRange(-grid_width*0.75, grid_width*0.75)
-		self.plotwidget.setXRange(0,grid_length)
+		#self.plotwidget.setYRange(-grid_width*0.75, grid_width*0.75)
+		#self.plotwidget.setYRange(-grid_length/2, grid_length/2)
+		#self.plotwidget.setXRange(0,grid_length)
+		self.plotwidget.setXRange(0,25)
+		self.plotwidget.setYRange(-12.5, 12.5)
 		left_layout.addWidget(self.plotwidget)
 		#Start button.
 		self.start_button = QtGui.QPushButton("System Booting")
@@ -81,31 +85,24 @@ class GUI(QtGui.QWidget):
 
 	def updateGrid(self, cones):
 		#Get cone position.
-		cones_x = []; cones_y = []
 		for element in cones:
-			cones_x.append(element[0])
-			cones_y.append(element[1])
+			self.cones_x.append(element[0])
+			self.cones_y.append(element[1])
 		#Add cone points to graph.
-		self.plotcurve.addPoints(cones_x, cones_y, symbol='x', pen=QtGui.QPen(QtGui.QColor(255, 255, 255)))
-		#Update point list.
-		graph_points.append(getPointsFromList(cones_x, cones_y))
+		self.plotcurve.addPoints(self.cones_x, self.cones_y, symbol='x', pen=QtGui.QPen(QtGui.QColor(255, 255, 255)))
 
 	def updatePosition(self, position):
 		#Get car position and add points to graph.
-		x = [position[0]]; y = [position[1]]
-		self.plotcurve.addPoints(x, y, symbol='o', pen=QtGui.QPen(QtGui.QColor(255, 0, 0)))
-		#Update point list.
-		graph_points.append(getPointsFromList(x, y))
+		self.graph_points_x.append(position[0])
+		self.graph_points_y.append(position[1])
+		self.plotcurve.addPoints(self.graph_points_x, self.graph_points_y, symbol='o', pen=QtGui.QPen(QtGui.QColor(255, 0, 0)))
 
-	def updateTrajectory(self, trajectory):
-		#Get path points.
-		points = []
-		points.append(getPointsFromList(trajectory[0],trajectory[1]))
-		points.append(graph_points)
-		x = [points[0]]; y = [points[1]]
+	def updateTrajectory(self, listx, listy):
 		#Replot graph.
 		self.plotcurve.clear()
-		self.plotcurve.addPoints(x, y, symbol='o', pen=QtGui.QPen(QtGui.QColor(0, 255, 0)))
+		self.plotcurve.addPoints(listx, listy, symbol='o', pen=QtGui.QPen(QtGui.QColor(0, 255, 0)))
+		self.plotcurve.addPoints(self.graph_points_x, self.graph_points_y, symbol='o', pen=QtGui.QPen(QtGui.QColor(255, 0, 0)))
+		self.plotcurve.addPoints(self.cones_x, self.cones_y, symbol='x', pen=QtGui.QPen(QtGui.QColor(255, 255, 255)))
 
 def main():
 	#Starting application.

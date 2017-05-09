@@ -23,6 +23,7 @@ cs_add_library(${PROJECT_NAME}
     src/tools.cpp
     planning/pure_pursuit.cpp
     planning/tools.cpp
+    planning/planner.cpp
 )
 
 cs_add_executable(cone_detector src/main.cpp)

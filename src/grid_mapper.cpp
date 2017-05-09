@@ -85,8 +85,8 @@ void GridMapper::validConeArea(Eigen::Vector2d cone_index){
 	//Convert cone area to index.
 	int area_index = detection_.cone_area/detection_.searching_resolution;
 	//Check if cone already exists.
-	for(int x = cone_index(0)-area_index/2; x<cone_index(0)+area_index/2; ++x)
-		for(int y = cone_index(1)-area_index/2; y<cone_index(1)+area_index/2; ++y)
+	for(int x = cone_index(0)-area_index; x<cone_index(0)+area_index; ++x)
+		for(int y = cone_index(1)-area_index; y<cone_index(1)+area_index; ++y)
 			if((bool)cone_map_[x][y]) return;
 	//Fill cone area iff cone is not in map.
 	cone_map_[cone_index(0)][cone_index(1)] = 1;		
