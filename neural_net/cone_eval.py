@@ -37,7 +37,7 @@ class NeuralNet:
 		#Init and saver variable.
 		'''self.X = tf.placeholder(tf.float32, [image_height,image_width,3])
 		self.Y = tf.placeholder(tf.float32, [2,])
-		self.pred = conv_net(self.X, image_height, image_width, 2)
+		self.pred = easyDense(self.X, image_height, image_width, 2)
 		self.sess = tf.Session()
 		self.init = tf.global_variables_initializer().run(session=self.sess)
 		self.saver = tf.train.Saver()
@@ -51,8 +51,9 @@ class NeuralNet:
 
 	def labeling(self,msg):
 		#Get image.
-    	#	image = np.zeros((1,image_height,image_width,3))
-		#image[0][:][:][:] =  convertMsgToArray(msg.image)
+		image = np.zeros((1,image_height, image_width,3))
+		image[0][:][:][:] =  convertMsgToArray(msg.image)
+
 		#Labeling.
 		#label = self.pred.eval(session=self.sess,feed_dict={self.X: image})[0]
 		#if(label[0] > label[1]):
