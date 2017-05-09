@@ -4,13 +4,15 @@ import numpy as np
 
 import rospy
 from geometry_msgs.msg import Point
-from nav_msgs.msg import OccupancyGrid
+from nav_msgs.msg import OccupancyGrid, Path
 from std_msgs.msg import Bool
+from std_msgs.msg import Float32MultiArray
 
 class ROSInterface(QtCore.QObject):
 
 	grid_signal = QtCore.pyqtSignal(list)
 	position_signal = QtCore.pyqtSignal(list)
+	trajectory_signal = QtCore.pyqtSignal(list, list)
 
 	def __init__(self):
 		QtCore.QObject.__init__(self)
@@ -20,6 +22,7 @@ class ROSInterface(QtCore.QObject):
 		self.mode_pub = rospy.Publisher('mode',Bool, queue_size=10)
 		self.grid_sub = rospy.Subscriber('cones_grid',OccupancyGrid,self.gridCallback, queue_size=10)
 		self.position_sub = rospy.Subscriber('car_position',Point,self.positionCallback, queue_size=10)
+		self.trajectory_sub = rospy.Subscriber('path', Float32MultiArray,self.trajectoryCallback, queue_size=10)
 
 	def gridCallback(self, msg):
 		#Init cone list.
@@ -37,6 +40,17 @@ class ROSInterface(QtCore.QObject):
 					cones.append([x_coord, y_coord])
 		#Send signal to gui.
 		if(len(cones) > 0): self.grid_signal.emit(cones)
+
+	def trajectoryCallback(self, msg):
+		#Get trajectory list.
+		listx = []
+		listy = []
+		for i in range(0,(len(msg.data)/2-1)):
+			listx.append(msg.data[2*i])
+			listy.append(msg.data[2*i+1])
+
+		#Send signal to gui.
+		if(len(msg.data) > 0): self.trajectory_signal.emit(listx, listy)
 
 	def positionCallback(self, msg):
 		#Get position.
