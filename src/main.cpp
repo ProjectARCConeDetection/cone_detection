@@ -80,38 +80,6 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	labeled_cloud_pub.publish(labeled_msg);
 	//Grid map visualisation.
 	nav_msgs::OccupancyGrid cone_grid = grid_mapper.getOccupancyGridMap();
-
-	//---------------------------------------------------------------------------------------
-	for(int i=0; i<cone_grid.data.size(); i++) {
-		cone_grid.data[i] = 0;
-	}
-	double width = cone_grid.info.width;
-	double resolution = cone_grid.info.resolution;
-	std::cout<<"Counter: "<<counter<<std::endl;
-	cone_grid.data[width/resolution*5 + 200] = 1;
-	if(counter>20) {
-		cone_grid.data[width/resolution*10 + 200] = 1;		
-	}
-	if(counter>20) {
-		cone_grid.data[width/resolution*15 + 2] = 1;		
-	}
-	if(counter>0) {
-		cone_grid.data[width/resolution*20 + 200] = 1;		
-	}
-	if(counter>40) {
-		cone_grid.data[width/resolution*25 + 2] = 1;		
-	}
-	if(counter>0) {
-		cone_grid.data[width/resolution*30 + 200] = 1;		
-	}
-	if(counter>60) {
-		cone_grid.data[width/resolution*35 + 2] = 1;		
-	}
-	if(counter>0) {
-		cone_grid.data[width/resolution*40 + 200] = 1;		
-	}				
-	//---------------------------------------------------------------------------------------
-
 	cone_grid_pub.publish(cone_grid);
 	//Pose visualisation.
 	geometry_msgs::Point position = grid_mapper.getPoseMsg();
