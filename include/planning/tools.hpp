@@ -29,6 +29,14 @@ struct Control{
 	double max_steering_angle;
 };
 
+struct Planning{
+	double distance_cone;
+	double number_points_x_axis;
+	double searching_length;
+	double searching_width;
+	double resolution;
+};
+
 namespace path{
 	double distanceBetween(int base_index,int target_index,std::vector<Eigen::Vector2d> positions);
 	double distanceToIndex(int target_index,std::vector<Eigen::Vector2d> positions);

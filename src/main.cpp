@@ -21,6 +21,7 @@ ros::Subscriber rovio_sub;
 LaserDetection cone_detector;
 ImageHandler image_handler;
 GridMapper grid_mapper;
+int counter=0;
 //Decleration of functions.
 void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
 void conesCallback(const cone_detection::Label::ConstPtr& msg);
@@ -87,6 +88,7 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
     // image_handler.showCones(grid_mapper.getConeMap(), grid_mapper.getPose());
 	//Clear vectors.
 	xyz_index_vector.clear();
+	counter++;
 }
 
 void conesCallback(const cone_detection::Label::ConstPtr& msg){
