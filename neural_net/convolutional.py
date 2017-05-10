@@ -11,8 +11,8 @@ import sys
 import tensorflow as tf
 
 # Training parameter.
-learning_rate = 0.0000001
-dropout = 0.75 
+learning_rate = 0.0001
+dropout = 0.25 
 batch_size = 128
 training_iters = 5000
 test_iterations = 200
@@ -22,8 +22,10 @@ reload_model = False
 equalising = True
 # Network parameter.
 rospy.init_node('convolutional network')
-image_width = rospy.get_param('/cone/width_pixel')
-image_height = rospy.get_param('/cone/height_pixel')
+# image_width = rospy.get_param('/cone/width_pixel')
+# image_height = rospy.get_param('/cone/height_pixel')
+image_width = 60
+image_height = 50
 # Datasets.
 path_to_directory = rospy.get_param('/candidate_path')
 path_to_model = rospy.get_param('/model_path')
