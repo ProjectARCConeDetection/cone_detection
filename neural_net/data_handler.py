@@ -85,7 +85,7 @@ class DataHandler:
             test_x.append(self.train_X[random_int])
             test_y.append(self.train_Y[random_int])
         #Equalise dataset.
-        # test_x, test_y = self.equaliseSet(test_x, test_y)
+        test_x, test_y = self.equaliseSet(test_x, test_y)
         return test_x, test_y
 
     def getTrainingData(self, equalising):

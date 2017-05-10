@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 #Definition of neural nets.
-def conv_net(x, image_height, image_width, n_classes): 
+def conv_net(x, image_height, image_width, n_classes, dropout): 
     # Reshape input picture.
     # x = tf.reshape(x, shape=[-1,image_height,image_width,3])
     # First Convolutional Layer.
@@ -18,11 +18,12 @@ def conv_net(x, image_height, image_width, n_classes):
                                     padding = "SAME", 
                                     activation_fn = None)
     pool2 = tf.contrib.layers.max_pool2d(inputs = conv2, kernel_size = [2,2], stride = [1,1])
-    # Fully connected layer.
+    # Fully connected layer with dropout.
     pool2_flat = tf.contrib.layers.flatten(pool2, [-1, 7*7*64])
     fc = tf.contrib.layers.fully_connected(inputs = pool2_flat, 
                                            num_outputs = 1024, 
                                            activation_fn = tf.nn.relu)
+    fc = tf.nn.dropout(fc, dropout)
     # Output layer.
     output = tf.contrib.layers.fully_connected(inputs = fc, 
                                                num_outputs = n_classes, 
@@ -54,40 +55,40 @@ def maxpool2d(x, k=2):
 def conv_without_contrib(x, image_height, image_width, n_classes, dropout): 
     # Store layers weight & bias
     weights = {
-        # 5x5 conv, 3 inputs, 16 outputs
-        'wc1': tf.Variable(tf.random_normal([5, 5, 3, 16])),
-        # 5x5 conv, 16 inputs, 32 outputs
-        'wc2': tf.Variable(tf.random_normal([5, 5, 16, 32])),
-        # fully connected, 32*195 inputs, 1024 outputs
-        'wd1': tf.Variable(tf.random_normal([32*195, 1024])),
+        # 5x5 conv, 3 inputs, 32 outputs
+        'wc1': tf.Variable(tf.random_normal([5, 5, 3, 32])),
+        # 15x15 conv, 32 inputs, 64 outputs
+        'wc2': tf.Variable(tf.random_normal([15, 15, 32, 64])),
+        # fully connected, 64*195 inputs, 1024 outputs
+        'wd1': tf.Variable(tf.random_normal([64*3000, 1024])),
         # 1024 inputs, 10 outputs (class prediction)
         'out': tf.Variable(tf.random_normal([1024, n_classes]))
     }
 
     biases = {
-        'bc1': tf.Variable(tf.random_normal([16])),
-        'bc2': tf.Variable(tf.random_normal([32])),
+        'bc1': tf.Variable(tf.random_normal([32])),
+        'bc2': tf.Variable(tf.random_normal([64])),
         'bd1': tf.Variable(tf.random_normal([1024])),
         'out': tf.Variable(tf.random_normal([n_classes]))
     }
-    # Reshape input picture
+    # Reshape input picture.
     x = tf.reshape(x, shape=[-1, image_height, image_width, 3])
-    # Convolution Layer
+    # Convolution Layer.
     conv1 = conv2d(x, weights['wc1'], biases['bc1'])
-    # Max Pooling (down-sampling)
-    conv1 = maxpool2d(conv1, k=2)
-    # Convolution Layer
+    # Max Pooling (down-sampling).
+    conv1 = maxpool2d(conv1, k=1)
+    # Convolution Layer.
     conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
-    # Max Pooling (down-sampling)
-    conv2 = maxpool2d(conv2, k=2)
+    # Max Pooling (down-sampling).
+    conv2 = maxpool2d(conv2, k=1)
     # Fully connected layer
-    # Reshape conv2 output to fit fully connected layer input
+    # Reshape conv2 output to fit fully connected layer input.
     fc1 = tf.reshape(conv2, [-1, weights['wd1'].get_shape().as_list()[0]])
     fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
     fc1 = tf.nn.relu(fc1)
-    # Apply Dropout
+    # Apply Dropout.
     fc1 = tf.nn.dropout(fc1, dropout)
-    # Output, class prediction
+    # Output, class prediction.
     out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
     return tf.nn.softmax(out)
 

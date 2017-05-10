@@ -34,6 +34,10 @@ Eigen::Vector2d GridMapper::convertLocalToGlobal(Candidate cone){
 	return global;
 }
 
+std::vector< std::vector<int> > GridMapper::getConeMap(){return cone_map_;}
+
+Pose GridMapper::getPose(){return pose_;}
+
 geometry_msgs::Point GridMapper::getPoseMsg(){
 	geometry_msgs::Point point_msg;
 	point_msg.x = pose_.position(0);

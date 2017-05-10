@@ -6,9 +6,8 @@
 
   <!-- CONE DETECTION -->
   <node name="cone_detector" pkg="cone_detection" type="cone_detector" output="screen" />
-  <node name="cone_eval_net" pkg="cone_detection" type="cone_eval_net.py" output="screen" />
+  <node name="cone_eval" pkg="cone_detection" type="cone_eval.py" output="screen" />
   <node name="viewer" pkg="cone_detection" type="viewer.py" output="screen" />
-  <node name="path_planner" pkg="cone_detection" type="path_planner" output="screen" />
 
 </launch>
 

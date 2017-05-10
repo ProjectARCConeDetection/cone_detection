@@ -4,11 +4,12 @@ ImageHandler::ImageHandler(){}
 
 ImageHandler::~ImageHandler(){}
 
-void ImageHandler::init(std::string candidate_path, Cone cone){
+void ImageHandler::init(std::string candidate_path, Cone cone, Detection detection){
     //Init camera matrices.
     cam_.initCamMatrices();
     //Getting parameter.
     cone_ = cone;
+    detection_ = detection;
     candidate_path_ = candidate_path;
 }
 
@@ -35,8 +36,6 @@ void ImageHandler::croppCandidates(std::vector <Candidate> xyz_index_vector){
         // Draws the rect in the original image and show it.
         for(int i=0; i<image_points_.size();++i){
             cv::Point point = image_points_[i];
-            // int x_start = point.x - object_width_/2;
-            // int y_start = point.y - object_height_/2;
             int x_start = point.x;
             int y_start = point.y + cone_.height_pixel/2;
             if(x_start < cam_.image_width-cone_.width_pixel && x_start > 0 
@@ -48,27 +47,80 @@ void ImageHandler::croppCandidates(std::vector <Candidate> xyz_index_vector){
                 //Save and show candidate.
                 std::string name = candidate_path_ + "candidates/" + numberToString(xyz_index_vector[i].index) + ".jpg";
                 cv::imwrite(name, cropped);
-                showCandidates(dst, x_start, y_start);
+                showCandidates(dst, x_start, y_start, "candidates");
             }
         }
     }
     else
-        showCandidates(dst);
+        showCandidates(dst, "candidates");
 }
 
-void ImageHandler::showCandidates(cv::Mat src){
+void ImageHandler::showCandidates(cv::Mat src, std::string name){
     cv::Mat src_copy = src.clone();
-    cv::imshow("Candidates", src_copy);
+    cv::imshow(name, src_copy);
     cv::waitKey(6);
 }
 
-void ImageHandler::showCandidates(cv::Mat src, int x_start, int y_start){
+void ImageHandler::showCandidates(cv::Mat src, int x_start, int y_start, std::string name){
     cv::Mat src_copy = src.clone();
     cv::Point pt1(x_start, y_start);
     cv::Point pt2(x_start+cone_.width_pixel,y_start-cone_.height_pixel);
     cv::rectangle(src_copy, pt1, pt2, CV_RGB(255,0,0), 1);
-    cv::imshow("Candidates", src_copy);
+    cv::imshow(name, src_copy);
     cv::waitKey(10);
+}
+
+void ImageHandler::showCones(std::vector< std::vector<int> > cone_map, Pose pose){
+    //Rotate image.
+    cv::Mat dst = rotateImage(180);
+    //Get all cones in cone map.
+    std::vector<Eigen::Vector2d> cones;
+    int x_steps = detection_.searching_length/detection_.searching_resolution;
+    int y_steps = detection_.searching_width/detection_.searching_resolution;
+    for(int x=0; x<x_steps; ++x)
+        for (int y=0; y<y_steps; ++y)
+            if(cone_map[x][y] == 1){
+                double x_pose = x*detection_.searching_resolution;
+                double y_pose = y*detection_.searching_resolution;
+                cones.push_back(Eigen::Vector2d(x_pose, y_pose));
+            }
+    //Convert to global and show boundary boxes.
+    for(int i=0; i<cones.size(); ++i)
+        cones[i] = pose.globalToLocal(cones[i]);
+    //Search for cones in front of car.
+    std::vector<Eigen::Vector2d> cones_in_front;
+    for(int i=0; i<cones.size(); ++i){
+        if(cones[i](0) > 0) cones_in_front.push_back(cones[i]);
+        std::cout << "Position: " << cones[i](0) << ", " << cones[i](1) << std::endl;
+    }
+    //Show only image iff no cones in front.
+    if(cones_in_front.size() == 0){
+        showCandidates(dst, "cones");
+        return;
+    }
+    //Convert to pixel.
+    object_points_.clear();
+    image_points_.clear();
+    for(int i=0; i<cones_in_front.size(); ++i){
+        cv::Point3d point;
+        point.z = cones_in_front[i](0);
+        point.x = -cones_in_front[i](1);
+        point.y = - (-1.4);
+        object_points_.push_back(point);
+    }
+    transformPointToPixel();
+    if(image_points_.size() > 0){
+        // Draws the rect in the original image and show it.
+        for(int i=0; i<image_points_.size();++i){
+            cv::Point point = image_points_[i];
+            int x_start = point.x;
+            int y_start = point.y + cone_.height_pixel/2;
+            if(x_start < cam_.image_width-cone_.width_pixel && x_start > 0 
+              && y_start < cam_.image_height-cone_.height_pixel && y_start > 0){ 
+                showCandidates(dst, x_start, y_start, "cones");
+            }
+        }
+    }
 }
 
 void ImageHandler::transformPointToPixel(){

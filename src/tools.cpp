@@ -66,15 +66,9 @@ Eigen::Vector2d Pose::globalToLocal(Eigen::Vector2d global){
   //Translatation
   Eigen::Vector3d temp = transforms::to3D(global - position);
   //Rotation
-  Eigen::Matrix3d R = transforms::getRotationMatrix(euler());
+  Eigen::Matrix3d R = transforms::getRotationMatrix(orientation);
   Eigen::Matrix3d T = R.transpose();
   Eigen::Vector3d local = T*temp;
-  //Change of coordinate frame.
-  //Eigen::Vector3d local_rotated;
-  //local_rotated(0) = -local(1);
-  //local_rotated(1) = local(0);
-  //local_rotated(2) = local(2);
-  //return local_rotated;
   //Convert to 2D.
   Eigen::Vector2d local_2D = transforms::to2D(local);
   return local_2D;
@@ -84,7 +78,7 @@ Eigen::Vector2d Pose::localToGlobal(const Eigen::Vector2d local){
     //Convert to 3D.
     Eigen::Vector3d local_3D = transforms::to3D(local);
     //Rotate.
-    Eigen::Matrix3d R = transforms::getRotationMatrix(euler());
+    Eigen::Matrix3d R = transforms::getRotationMatrix(orientation);
     Eigen::Vector3d global = R*local_3D;
     //Convert to 2D.
     Eigen::Vector2d global_2D = transforms::to2D(global);
@@ -110,15 +104,13 @@ Eigen::Vector3d to3D(const Eigen::Vector2d input){
     return output;
 }
 
-Eigen::Matrix3d getRotationMatrix(Eigen::Vector3d euler){ 
-    double roll = euler(0);
-    double pitch = euler(1);
-    double yaw = euler(2);
-    //Rotation matrix.
+Eigen::Matrix3d getRotationMatrix(Eigen::Vector4d quats){ 
+    double a = quats(3); double b = quats(0);
+    double c = quats(1); double d = quats(2);
     Eigen::Matrix3d rotation_matrix;
-    rotation_matrix<<   cos(yaw)*cos(pitch),    cos(yaw)*sin(pitch)*sin(roll)-sin(yaw)*cos(roll),   cos(yaw)*sin(pitch)*cos(roll)+sin(yaw)*sin(roll) ,
-            sin(yaw)*cos(pitch),    sin(yaw)*sin(pitch)*sin(roll)+cos(yaw)*cos(roll),   sin(yaw)*sin(pitch)*cos(roll)-cos(yaw)*sin(roll),
-            -sin(pitch),        cos(pitch)*sin(roll),                       cos(pitch)*cos(roll);
+    rotation_matrix<<(1-2*(c*c + d*d)), 2*(b*c - a*d), 2*(b*d + a*c), 
+                    2*(b*c + a*d), (1-2*(d*d + b*b)), 2*(c*d - a*b), 
+                    2*(b*d - a*c), 2*(c*d + a*b), (1-2*(b*b + c*c));
     return rotation_matrix;
 }
 }//namespace transforms.

@@ -41,7 +41,7 @@ int main(int argc, char** argv){
 	gettingParameter(&node,&candidate_path,&cone,&detection,&erod);
 	//Init classes.
 	grid_mapper.init(detection);
-	image_handler.init(candidate_path, cone);
+	image_handler.init(candidate_path, cone, detection);
 	cone_detector.init(cone, detection, erod);
 	//Init pubs & subs.
 	candidates_pub = node.advertise<cone_detection::Label>("/candidates", 10);
@@ -84,6 +84,8 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	//Pose visualisation.
 	geometry_msgs::Point position = grid_mapper.getPoseMsg();
 	position_pub.publish(position);
+	//Update cone visualisation.
+    // image_handler.showCones(grid_mapper.getConeMap(), grid_mapper.getPose());
 	//Clear vectors.
 	xyz_index_vector.clear();
 	counter++;
@@ -123,7 +125,6 @@ void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg){
 	rovio_pose.position = transforms::to2D(temp_position);
   	//Set pose.
   	grid_mapper.setPose(rovio_pose);
-  	//TODO: Test which angle is theta (2D space angle) --> simple u turn.
 }
 
 void publishCandidates(std::vector <Candidate> xyz_index_vector,

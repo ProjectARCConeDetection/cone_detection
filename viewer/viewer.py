@@ -13,7 +13,7 @@ def getPointsFromList(x_points,y_points):
 	#Write to single arrays.
 	points = []
 	for index in range(0, len(x_points)-1):
-		points.append([x_points[i],y_points[i]])
+		points.append([x_points[index],y_points[index]])
 	return points
 
 class GUI(QtGui.QWidget):
@@ -43,9 +43,6 @@ class GUI(QtGui.QWidget):
 		self.plotwidget = pg.PlotWidget()
 		self.plotcurve = pg.ScatterPlotItem()
 		self.plotwidget.addItem(self.plotcurve)
-		#self.plotwidget.setYRange(-grid_width*0.75, grid_width*0.75)
-		#self.plotwidget.setYRange(-grid_length/2, grid_length/2)
-		#self.plotwidget.setXRange(0,grid_length)
 		self.plotwidget.setXRange(0,25)
 		self.plotwidget.setYRange(-12.5, 12.5)
 		left_layout.addWidget(self.plotwidget)

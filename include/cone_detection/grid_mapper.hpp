@@ -19,8 +19,10 @@ public:
 	void init(Detection detection);
 	void updateConeMap(Eigen::Vector2d cone_position);
 	Eigen::Vector2d convertLocalToGlobal(Candidate cone);
-	geometry_msgs::Point getPoseMsg();
+	std::vector< std::vector<int> > getConeMap();
 	nav_msgs::OccupancyGrid getOccupancyGridMap();
+	Pose getPose();
+	geometry_msgs::Point getPoseMsg();
 	void setPose(Pose pose);
 private:
 	//Current pose.

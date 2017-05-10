@@ -63,7 +63,7 @@ struct Pose{
 namespace transforms{
 	Eigen::Vector2d to2D(const Eigen::Vector3d input);
 	Eigen::Vector3d to3D(const Eigen::Vector2d input);
-	Eigen::Matrix3d getRotationMatrix(Eigen::Vector3d euler);
+	Eigen::Matrix3d getRotationMatrix(Eigen::Vector4d quats);
 }//namespace transforms.
 namespace quat {
 	Eigen::Vector4d multQuaternion(Eigen::Vector4d q1,Eigen::Vector4d q2);
