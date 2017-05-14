@@ -38,8 +38,8 @@ detection/intensity_threshold: 90 #Minimal intensity of detected objects.
 #Neural Net.
 neural_net/datasets: ['Biberist20_4']
 #Paths.
-candidate_path: '/home/nico/cones/candidates/' #Path to candidate images.
-model_path: '/home/nico/cones/candidates/' #Path to trained models.
+candidate_path: '/home/sele/cones/candidates/' #Path to candidate images.
+model_path: '/home/sele/cones/candidates/' #Path to trained models.
 #Control.
 control/distance_interpolation: 3 #Distance of three points for curvature calculation.
 control/K1_LAD_S: 1.1 #Dynamic part for look ahead distance steer.
