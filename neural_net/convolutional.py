@@ -9,81 +9,89 @@ import numpy as np
 import rospy
 import sys
 import tensorflow as tf
+import time
 
 # Training parameter.
 learning_rate = 0.0001
-dropout = 0.25 
-batch_size = 128
-training_iters = 5000
-test_iterations = 200
+eps_regularization = 0.01
+batch_size = 64
+training_iters = 2000
+test_iterations = 64
 display_step = 10
-decrease_rate_step = 500
-reload_model = False
-equalising = True
 # Network parameter.
 rospy.init_node('convolutional network')
-# image_width = rospy.get_param('/cone/width_pixel')
-# image_height = rospy.get_param('/cone/height_pixel')
-image_width = 60
-image_height = 50
+image_width = rospy.get_param('/cone/width_pixel')
+image_height = rospy.get_param('/cone/height_pixel')
 # Datasets.
 path_to_directory = rospy.get_param('/candidate_path')
 path_to_model = rospy.get_param('/model_path')
 datasets = rospy.get_param('/neural_net/datasets')
+datasets_test = rospy.get_param('/neural_net/datasets_test')
 
 #Data Handler.
 data = DataHandler(image_height,image_width,batch_size,test_iterations, 
-                   path_to_directory, path_to_model, datasets, equalising)
-
-# tf Graph input.
-X = tf.placeholder(tf.float32, [None,image_height,image_width,3])
-Y = tf.placeholder(tf.float32, [None,2])
-rate = tf.placeholder(tf.float32, shape=[])
-keep_prob = tf.placeholder(tf.float32)
+                   path_to_directory, path_to_model, datasets, datasets_test)
+# tf Graph placeholder.
+input_placeholder = tf.placeholder(tf.float32, [None, image_height, image_width, 3])
+output_placeholder = tf.placeholder(tf.float32, [None, 2])
+input_placeholder_flat = tf.contrib.layers.flatten(input_placeholder)
+y_true = tf.argmax(output_placeholder, dimension=1)
 
 # Construct model.
-pred = conv_without_contrib(X, image_height, image_width, 2, keep_prob)
-# Define loss and optimizer
-cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits   (logits=pred, labels=Y))
-optimizer = tf.train.AdamOptimizer(learning_rate=rate).minimize(cost)
-# Evaluate model
-correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(Y, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+output_layer = fully_connected(input_placeholder_flat, eps_regularization)
+y_pred = tf.argmax(tf.nn.softmax(output_layer), dimension=1)
+#Cost and optimizer.
+cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=output_layer,labels=output_placeholder)
+cost = tf.reduce_mean(cross_entropy)
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+#Prediction and accuracy.
+correct_prediction = tf.equal(y_pred, y_true)
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
 # Initializing the variables
-init = tf.global_variables_initializer()
+session = tf.Session()
+session.run(tf.global_variables_initializer())
 saver = tf.train.Saver()
 
-# Launch the graph
-with tf.Session() as sess:
-    sess.run(init)
-    step = 1
-    # Training network.
-    if(reload_model): 
-        saver.restore(sess, path_to_model + getModelName(datasets) +" .cpkt")
-        print("\nRestored model ! \n")
-    else:
-        print("\nOptimizing with %f steps and batch size %f" % (training_iters, batch_size))
-        while (step*batch_size < training_iters):
-            batch_x, batch_y = data.getBatch()
-            sess.run(optimizer, feed_dict={X: batch_x, Y: batch_y, 
-                                          rate:learning_rate, keep_prob: dropout})
-            step += 1
-            # Display progress.
-            if(step%display_step == 0): 
-                # Calculate batch loss and accuracy
-                loss, acc = sess.run([cost, accuracy], feed_dict={X: batch_x, Y: batch_y, 
-                                                                  keep_prob: 1.0})
-                print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
-                      "{:.6f}".format(loss) + ", Training Accuracy= " + \
-                      "{:.5f}".format(acc))
-            #Decrease learning rate.
-            if(step%decrease_rate_step == 0): 
-                learning_rate /= 2.5
-                print("Decreasing learning rate to " + "{:.10f}".format(learning_rate))
-        save_path = saver.save(sess, path_to_model + getModelName(datasets) +" .cpkt")
-        print("Optimization Finished! \n")
-    #Testing network.
-    test_x, test_y = data.getRandomTestData()
-    print("Testing Accuracy:", \
-        sess.run(accuracy, feed_dict={X: test_x, Y: test_y, keep_prob: 1.0}))
-
+#Start-time used for printing time-usage below.
+start_time = time.time()
+for i in range(training_iters):
+    #Get a batch of training examples.
+    x_batch, y_batch = data.getBatch()
+    #Optimizing net according to batch.
+    feed_dict_train = {input_placeholder: x_batch,
+                       output_placeholder: y_batch}
+    session.run(optimizer, feed_dict=feed_dict_train)
+    #Calculate the accuracy status.
+    if i % display_step == 0:
+        x_training_test, y_training_test = data.getTrainingTestBatch()
+        feed_dict_training_test = {input_placeholder: x_training_test,
+                                   output_placeholder: y_training_test}
+        x_test, y_test = data.getTestBatch()
+        feed_dict_test = {input_placeholder: x_test,
+                          output_placeholder: y_test}
+        loss_batch, acc_batch = session.run([cost, accuracy], feed_dict=feed_dict_train)
+        acc_training = session.run(accuracy, feed_dict=feed_dict_training_test)
+        acc_test = session.run(accuracy, feed_dict=feed_dict_test)
+        msg = "Optimization Iteration: %f, Accuracy on batch: %f, Accuracy on training data: %f, Accuracy on test data : %f"
+        print(msg % (i+1, acc_batch, acc_training, acc_test))
+        data.saveAccuracyAndLoss(i+1, acc_batch, acc_training, acc_test, loss_batch)
+#Print training time.
+end_time = time.time()
+time_dif = end_time - start_time
+print("Time usage: " + str(time_dif))
+#Testing accuracy on training data set.
+x_training_test, y_training_test = data.getTrainingTestBatch()
+feed_dict_training_test = {input_placeholder: x_training_test,
+                           output_placeholder: y_training_test}
+x_test, y_test = data.getTestBatch()
+feed_dict_test = {input_placeholder: x_test,
+                  output_placeholder: y_test}
+acc_training = session.run(accuracy, feed_dict=feed_dict_training_test)
+acc_test = session.run(accuracy, feed_dict=feed_dict_test)
+print("Accuracy at all on training: %f and test: %f" % (acc_training, acc_test))
+#Plot accuracy plot.
+data.plotAccuracyPlot()
+#Save model.
+save = saver.save(session, path_to_model + getModelName(datasets) +" .cpkt")
+print("Model saved to " + path_to_model + getModelName(datasets))

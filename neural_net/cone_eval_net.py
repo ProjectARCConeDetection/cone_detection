@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import tensorflow as tf
+from skimage import color
 
 import rospy
 from cone_detection.msg import Label
@@ -35,11 +36,9 @@ def deleteFolderContent(path):
 class NeuralNet:
 	def __init__(self):
 		#Init and saver variable.
-		self.X = tf.placeholder(tf.float32, [None,image_height,image_width,3])
-		self.Y = tf.placeholder(tf.float32, [None,2])
-		self.keep_prob = tf.placeholder(tf.float32)
-		self.pred = conv_without_contrib(self.X, image_height, image_width, 2, self.keep_prob)
-
+		input_placeholder = tf.placeholder(tf.float32, [None, image_height, image_width, 3])
+		output_layer = fully_connected(input_placeholder_flat, 0.01)
+		#Init tf session.
 		self.sess = tf.Session()
 		self.init = tf.global_variables_initializer().run(session=self.sess)
 		self.saver = tf.train.Saver()
@@ -53,10 +52,9 @@ class NeuralNet:
 	def labeling(self,msg):
 		#Get image.
 		image = np.zeros((1,image_height, image_width,3))
-		image[0][:][:][:] =  convertMsgToArray(msg.image)
-
+		image[0][:][:][:] =  color.rgb2lab(convertMsgToArray(msg.image)) / 255.0
 		#Labeling.
-		label = self.pred.eval(session=self.sess,feed_dict={self.X: image, self.keep_prob: 1.0})[0]
+		label = self.pred.eval(session=self.sess,feed_dict={self.X: image})[0]
 		if(label[0] > label[1]):
 			msg.label = True
 			self.cone_counter += 1
