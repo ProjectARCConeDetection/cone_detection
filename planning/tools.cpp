@@ -61,6 +61,7 @@ void VCUInterface::send_msg(std::string symbol, double msg, bool requirement){
     //Create char array.
     std::string sending = symbol + ":" + value_string;
     const char *buffer_out = sending.c_str();
+    std::cout<<"msg: "<< sending<<std::endl;
     //Sending to VCU.
     if(requirement)
        if (sendto(sock_, buffer_out, sizeof(buffer_out), 0, (struct sockaddr*) &si_VCU_, slen_) == -1) 

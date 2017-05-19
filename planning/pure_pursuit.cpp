@@ -18,13 +18,18 @@ void PurePursuit::calculateControls(Pose pose, double velocity){
 	//Calculate controls.
 	should_controls_.steering_angle = calculateSteering(pose, velocity);
 	should_controls_.velocity = calculateVel(pose, velocity);
+	std::cout<<"Velocity: "<<should_controls_.velocity<<"Steering: "<<should_controls_.steering_angle<<std::endl;
 	//Send controls to VCU.
 	vcu_.send_msg("vs",should_controls_.velocity, true, control_.max_absolute_velocity, -100, 0);
 	vcu_.send_msg("ss",should_controls_.steering_angle/180.0*M_PI, true, 
-				   control_.max_steering_angle, -control_.max_steering_angle, 1000);
+				   control_.max_steering_angle, -control_.max_steering_angle, 0);
 }
 
-void PurePursuit::startAutonomousMode(bool mode){vcu_.send_msg("am", 5.0, mode);}
+void PurePursuit::startAutonomousMode(bool mode){
+	vcu_.send_msg("cc", 5.0, mode);
+	ros::Duration(0.5).sleep();
+	vcu_.send_msg("am", 1.0, mode);
+}
 
 double PurePursuit::calculateSteering(Pose pose, double velocity){
 	//Empirical linear function to determine the look-ahead-distance.

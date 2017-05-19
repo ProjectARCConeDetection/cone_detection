@@ -7,6 +7,7 @@
 #include <eigen3/Eigen/Eigen>
 #include <iostream>
 #include <vector>
+#include <ros/ros.h>
 
 class PurePursuit{
 public:
