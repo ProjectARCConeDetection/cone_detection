@@ -36,6 +36,7 @@ class DataHandler:
         self.acc_test = []
         self.loss_batch = []
         self.figure_name = self.path_model + getModelName(datasets) + '.png'
+        self.description = self.Description(datasets, datasets_test)
 
     def getBatch(self):
         length = len(self.train_X)-1
@@ -70,6 +71,15 @@ class DataHandler:
             test_y[index][:] = self.train_Y[random_int]
         return test_x, test_y
 
+    def Description(self, datasets, datasets_test):
+        description = "Training Sets: "
+        for element in datasets:
+            description += str(element) + "_"
+        description += " and Testing Sets: "
+        for element in datasets_test:
+            description += str(element) + "_"
+        return description
+
     def ImageFromPath(self, path):
         img = Image.open(path)
         arr = np.array(img.getdata(),np.uint8)
@@ -87,11 +97,19 @@ class DataHandler:
         return labeled_list
 
     def plotAccuracyPlot(self):
+        #Create figure.
+        fig = plt.figure()
+        fig.suptitle('Accuarcy and Loss Graph', fontsize=14, fontweight='bold')
+        ax = fig.add_subplot(111)
+        fig.subplots_adjust(top=0.85)
+        ax.set_title(self.description)
+        #Add plots.
         plt.plot(self.index, self.acc_batch, 'r', label="acc_batch")
         plt.plot(self.index, self.loss_batch, 'r--', label="loss_batch")
         plt.plot(self.index, self.acc_train, 'k', label="acc_train") 
         plt.plot(self.index, self.acc_test, 'g', label="acc_test")
         plt.legend(loc=2)
+        #Save and show.
         plt.savefig(self.figure_name)
         plt.show()
 
@@ -132,9 +150,8 @@ class DataHandler:
         # Getting labeled list of all datasets.
         for dataset in datasets:
             path = os.path.join(self.path_candidates, dataset)
-            labeled_list.append(self.Labels(path + "/labeling.csv", dataset))
+            labeled_list.extend(self.Labels(path + "/labeling.csv", dataset))
         # Shuffle list.
-        labeled_list = labeled_list[0]
         shuffle(labeled_list)
         # Getting training data.
         positive = 0; negative = 0;

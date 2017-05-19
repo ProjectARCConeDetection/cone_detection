@@ -5,7 +5,7 @@
   <rosparam command="load" file="$(find cone_detection)/cfg/parameter.yaml" />
 
   <!-- CONVOLUTIONAL NETWORK -->
-  <node name="convolutional" pkg="cone_detection" type="convolutional.py" output="screen" />
+  <node name="train" pkg="cone_detection" type="train.py" output="screen" required="true" />
 
 </launch>
 

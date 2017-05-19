@@ -10,11 +10,12 @@
   <node name="cone_eval_net" pkg="cone_detection" type="cone_eval_net.py" output="screen" />
   <node name="viewer" pkg="cone_detection" type="viewer.py" output="screen" />
   <node name="path_planner" pkg="cone_detection" type="path_planner" output="screen" />
+
   <!-- WEBCAM -->
   <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" />
   <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
     <remap from="image" to="/usb_cam/image_raw"/>
-    <param name="autosize" value="true" />
+    <param name="autosize" value="false" />
   </node>
 
   <!-- VELODYNE -->
