@@ -27,19 +27,20 @@ erod/distance_wheel_axis: 2.35585  #[m], distance between front and rear axis.
 erod/height_laser: 1.33 #Distance laser to ground.
 #Cone parameter.
 cone/height_meter: 1.0 #Height of cone[meter].
-cone/height_pixel: 28 #Height of cone[pixel].
-cone/width_pixel: 36 #Width of cone[pixel].
+cone/height_pixel: 60 #Height of cone[pixel].
+cone/width_pixel: 50 #Width of cone[pixel].
 #Detection parameter.
 detection/cone_area: 1.3 #Length of quadratic cone area in grid map[meter].
 detection/searching_length: 100 #x-Range for searching.
 detection/searching_resolution: 0.1 #Grid resolution.
-detection/searching_width: 15.0 #y-Range for searching.
+detection/searching_width: 3 #15.0 #y-Range for searching.
 detection/intensity_threshold: 90 #Minimal intensity of detected objects.
 #Neural Net.
-neural_net/datasets: ['Biberist20_4']
+neural_net/datasets: ['biberist_20_4']
+neural_net/datasets_test: ['hoengg_18_05']
 #Paths.
 candidate_path: '/home/sele/cones/candidates/' #Path to candidate images.
-model_path: '/home/sele/cones/candidates/' #Path to trained models.
+model_path: '/home/sele/cones/models/' #Path to trained models.
 #Control.
 control/distance_interpolation: 3 #Distance of three points for curvature calculation.
 control/K1_LAD_S: 1.1 #Dynamic part for look ahead distance steer.
@@ -48,7 +49,7 @@ control/K1_LAD_V: 0.5 #Dynamic part for lad radius for velocity.
 control/K2_LAD_V: 0 #Dynamic part for lad radius for velocity reference.
 control/upperbound_lad_s: 7.3 #Empyrisch getestet
 control/lowerbound_lad_s: 3  #Empyrisch getestet
-control/max_absolute_velocity: 10 #[m/s], maximal velocity.
+control/max_absolute_velocity: 3 #[m/s], maximal velocity.
 control/max_lateral_acceleration: 4 #[m/s²], maximal lateral acceleration.
 control/max_steering_angle: 25 #[deg] +-° steering wheel impact.
 #Path planning.
