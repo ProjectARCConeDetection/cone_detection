@@ -3,13 +3,14 @@ import math
 import numpy as np
 
 import rospy
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Pose
 from nav_msgs.msg import OccupancyGrid, Path
 from std_msgs.msg import Bool
 from std_msgs.msg import Float32MultiArray
 
 class ROSInterface(QtCore.QObject):
 
+	controls_signal = QtCore.pyqtSignal(list)
 	grid_signal = QtCore.pyqtSignal(list)
 	position_signal = QtCore.pyqtSignal(list)
 	trajectory_signal = QtCore.pyqtSignal(list, list)
@@ -20,9 +21,16 @@ class ROSInterface(QtCore.QObject):
 		rospy.init_node('cone detection gui')
 		#Define publisher and subscriber.
 		self.mode_pub = rospy.Publisher('mode',Bool, queue_size=10)
+		self.control_sub = rospy.Subscriber('stellgroessen',Float32MultiArray,self.controlsCallback, queue_size=10)
 		self.grid_sub = rospy.Subscriber('cones_grid',OccupancyGrid,self.gridCallback, queue_size=10)
-		self.position_sub = rospy.Subscriber('car_position',Point,self.positionCallback, queue_size=10)
+		self.position_sub = rospy.Subscriber('car_pose',Pose,self.positionCallback, queue_size=10)
 		self.trajectory_sub = rospy.Subscriber('path', Float32MultiArray,self.trajectoryCallback, queue_size=10)
+
+	def controlsCallback(self, msg):
+		#Controls list (Steering, velocity).
+		controls = [msg[0], msg[1]]
+		#Send signal to gui.
+		self.controls_signal.emit(controls)
 
 	def gridCallback(self, msg):
 		#Init cone list.
@@ -48,13 +56,12 @@ class ROSInterface(QtCore.QObject):
 		for i in range(0,(len(msg.data)/2-1)):
 			listx.append(msg.data[2*i])
 			listy.append(msg.data[2*i+1])
-
 		#Send signal to gui.
 		if(len(msg.data) > 0): self.trajectory_signal.emit(listx, listy)
 
 	def positionCallback(self, msg):
 		#Get position.
-		position = [msg.x, msg.y]
+		position = [msg.position.x, msg.position.y]
 		#Send signal to gui.
 		self.position_signal.emit(position)
 

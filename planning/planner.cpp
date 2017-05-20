@@ -1,7 +1,5 @@
 #include <planning/planner.hpp>
 
-
-
 void Planner::init(Planning planning) {
 	planning_ = planning;
 }
@@ -196,11 +194,15 @@ double Planner::removePoints(int index_position_cone_1){
 	return planning_.distance_cone/(tan(angle_cone1_cone3/2));
 }
 
-std_msgs::Float32MultiArray Planner::getGlobalPath() {
+std_msgs::Float32MultiArray Planner::getGlobalPathMsg(){
 	std_msgs::Float32MultiArray global_path_array;
 	for(int i=0;i<global_path_.size();i++) {
 		global_path_array.data.push_back(global_path_[i][0]);
 		global_path_array.data.push_back(global_path_[i][1]);
 	}
 	return global_path_array;
+}
+
+std::vector<Eigen::Vector2d> Planner::getGlobalPath(){
+	return global_path_;
 }

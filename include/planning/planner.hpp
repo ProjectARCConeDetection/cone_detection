@@ -30,7 +30,8 @@ public:
 	std::vector<Eigen::Vector2d> GlobalControlPoints(std::vector<Eigen::Vector2d> local_points, double angle, Eigen::Vector2d position_cone_1);
 	std::vector<Eigen::Vector2d> CircleFiller(Eigen::Vector2d position_cone_1, Eigen::Vector2d edge_point_cone_1, Eigen::Vector2d edge_point_cone_2);
 	double removePoints(int index_position_cone_1);
-	std_msgs::Float32MultiArray getGlobalPath();
+	std_msgs::Float32MultiArray getGlobalPathMsg();
+	std::vector<Eigen::Vector2d> getGlobalPath();
 
 private:
 	Planning planning_;

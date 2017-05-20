@@ -21,7 +21,6 @@ ros::Subscriber rovio_sub;
 LaserDetection cone_detector;
 ImageHandler image_handler;
 GridMapper grid_mapper;
-int counter=0;
 //Decleration of functions.
 void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
 void conesCallback(const cone_detection::Label::ConstPtr& msg);
@@ -47,13 +46,17 @@ int main(int argc, char** argv){
 	candidates_pub = node.advertise<cone_detection::Label>("/candidates", 10);
 	cone_grid_pub = node.advertise<nav_msgs::OccupancyGrid>("/cones_grid", 10);
 	labeled_cloud_pub = node.advertise<sensor_msgs::PointCloud2>("/labeled_points", 10);
-	position_pub = node.advertise<geometry_msgs::Point>("/car_position", 10);
+	position_pub = node.advertise<geometry_msgs::Pose>("/car_pose", 10);
 	cloud_sub = node.subscribe("/velodyne_points", 10, cloudCallback);
 	raw_image_sub = node.subscribe("/usb_cam/image_raw", 10, imageCallback);
 	cones_sub = node.subscribe("/cones", 10, conesCallback);
 	rovio_sub = node.subscribe("/rovio/odometry", 10, rovioCallback);
   	//Spinning.
-  	ros::spin();
+  	ros::Rate rate(10);
+  	while(ros::ok()){
+  		ros::spinOnce();
+  		rate.sleep();
+  	}
 	return 0;
 }
 
@@ -82,13 +85,12 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	nav_msgs::OccupancyGrid cone_grid = grid_mapper.getOccupancyGridMap();
 	cone_grid_pub.publish(cone_grid);
 	//Pose visualisation.
-	geometry_msgs::Point position = grid_mapper.getPoseMsg();
-	position_pub.publish(position);
+	geometry_msgs::Pose pose = grid_mapper.getPoseMsg();
+	position_pub.publish(pose);
 	//Update cone visualisation.
     // image_handler.showCones(grid_mapper.getConeMap(), grid_mapper.getPose());
 	//Clear vectors.
 	xyz_index_vector.clear();
-	counter++;
 }
 
 void conesCallback(const cone_detection::Label::ConstPtr& msg){

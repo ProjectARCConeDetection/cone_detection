@@ -9,46 +9,81 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <cone_detection/Path.h>
 
-//Publisher.& Subscriber
+//Publisher.& Subscriber.
+ros::Publisher controls_pub;
+ros::Publisher path_pub;
 ros::Subscriber mode_sub;
 ros::Subscriber gridmap_sub;
-ros::Publisher path_pub;
+ros::Subscriber pose_sub;
 //Init classes.
 PurePursuit pure_pursuit;
 Planner planner;
+VCUInterface vcu;
+//Parameter.
+Control control;
+Planning planning;
 //Decleration of functions.
 void modeCallback(const std_msgs::Bool::ConstPtr& msg);
 void gridmapCallback(const nav_msgs::OccupancyGrid grid);
+void poseCallback(const geometry_msgs::Pose::ConstPtr& msg);
 void gettingParameter(ros::NodeHandle* node, Control* control, Planning* planning);
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "path_planner");
 	ros::NodeHandle node;
 	//Getting parameter.
-	Control control;
-	Planning planning;
 	gettingParameter(&node,&control,&planning);
 	//Init classes.
 	pure_pursuit.init(control);
 	planner.init(planning);
+	// vcu.init();
 	//Init pubs & subs.
+	controls_pub = node.advertise<std_msgs::Float32MultiArray>("/stellgroessen", 1);
 	path_pub = node.advertise<std_msgs::Float32MultiArray>("/path", 10);
 	mode_sub = node.subscribe("/mode", 1, modeCallback);
 	gridmap_sub = node.subscribe("/cones_grid", 1, gridmapCallback);
+	pose_sub = node.subscribe("/car_pose", 1, poseCallback);
   	//Spinning.
-  	ros::spin();
+  	ros::Rate rate(10);
+  	while(ros::ok()){
+  		ros::spinOnce();
+		// pure_pursuit.setVelocity(vcu.recv_velocity());
+		rate.sleep();
+  	}
 	return 0;
 }
 
 void modeCallback(const std_msgs::Bool::ConstPtr& msg){
-	//Start autonomous mode if true.
-	pure_pursuit.startAutonomousMode(msg->data);
+	vcu.send_msg("cc", 5.0, msg->data);
+	ros::Duration(0.5).sleep();
+	vcu.send_msg("am", 1.0, msg->data);
 }
 
-void gridmapCallback(const nav_msgs::OccupancyGrid grid) {
+void gridmapCallback(const nav_msgs::OccupancyGrid grid){
+	std::cout << "grid map callback " << std::endl;
+	//Path planning.
 	planner.gridAnalyser(grid);
-	std_msgs::Float32MultiArray global_path = planner.getGlobalPath();
-	path_pub.publish(global_path);
+	//Calculate controls.
+	std::vector<Eigen::Vector2d> path = planner.getGlobalPath();
+	AckermannControl stellgroessen = pure_pursuit.calculateControls(path);
+	stellgroessen.print();
+	//Send controls to VCU.
+	// vcu.send_msg("vs",stellgroessen.velocity, true, control.max_absolute_velocity, -100, 0);
+	// vcu.send_msg("ss",stellgroessen.steering_angle/180.0*M_PI, true, 
+	// 			  control.max_steering_angle, -control.max_steering_angle, 0);
+	//Visualisation.
+	std_msgs::Float32MultiArray global_path_msg = planner.getGlobalPathMsg();
+	path_pub.publish(global_path_msg);
+	std_msgs::Float32MultiArray control_msg = pure_pursuit.getControlsMsg();
+	controls_pub.publish(control_msg);
+}
+
+void poseCallback(const geometry_msgs::Pose::ConstPtr& msg){
+	Pose pose;
+	pose.position = Eigen::Vector2d(msg->position.x, msg->position.y);
+	pose.orientation = Eigen::Vector4d(msg->orientation.x, msg->orientation.y, 
+									   msg->orientation.z, msg->orientation.w);
+	pure_pursuit.setPose(pose);
 }
 
 void gettingParameter(ros::NodeHandle* node, Control* control, Planning* planning){

@@ -8,26 +8,30 @@
 #include <iostream>
 #include <vector>
 #include <ros/ros.h>
+#include <std_msgs/Float32MultiArray.h>
 
 class PurePursuit{
 public:
 	PurePursuit();
 	~PurePursuit();
 	void init(Control control);
-	void calculateControls(Pose pose, double velocity);
-	void startAutonomousMode(bool mode);
+	AckermannControl calculateControls(std::vector<Eigen::Vector2d> path);
+	std_msgs::Float32MultiArray getControlsMsg();
+	void setPose(Pose pose);
+	void setVelocity(double velocity);
 private:
 	//Current controls.
 	AckermannControl should_controls_;
 	//Reference path.
 	std::vector<Eigen::Vector2d> path_;
+	//Car position, orientation and velocity.
+	Pose pose_;
+	double velocity_;
 	//Control parameter.
 	Control control_;
-	//VCU Interface.
-	VCUInterface vcu_;
 	//Helper functions.
-	double calculateSteering(Pose pose, double velocity);
-	double calculateVel(Pose pose, double velocity);
+	double calculateSteering();
+	double calculateVel();
 	double curveRadius();
 };
 

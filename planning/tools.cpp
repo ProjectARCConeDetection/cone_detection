@@ -1,5 +1,11 @@
 #include <planning/tools.hpp>
 
+void AckermannControl::print(){
+    std::cout << "------------Stellgroessen -----------------" << std::endl;
+    std::cout << "steering: " << steering_angle << " velocity " << velocity << std::endl;
+ }
+
+
 namespace path{
 
 double distanceBetween(int base_index,int target_index,std::vector<Eigen::Vector2d> positions){
@@ -53,6 +59,28 @@ void VCUInterface::init(){
     if(bind(sock_, (struct sockaddr*)&si_me_, sizeof(si_me_)) == -1) printError("binding");
 }
 
+double VCUInterface::recv_velocity(){
+    //Receiving.
+    int recv_len;
+    char buffer_in[buflen_];
+    if ((recv_len = recvfrom(sock_, buffer_in, buflen_, 0, (struct sockaddr *) &si_other_, &slen_)) == -1) 
+       printError("receiving");
+    //Convert msg to string.
+    std::string msg;
+    for (int i = 0; i < recv_len; ++i) msg += buffer_in[i];
+    //Get kind of msg and value.
+    std::string kind = msg.substr(0,2);
+    std::string value_string(msg, 3, msg.length()-1);
+    const char *buffer = value_string.c_str();
+    double value = atof(buffer);
+    //Answers.
+    double velocity;
+    if(kind == "rr") velocity = value;
+    else if(kind == "rl") velocity = value;
+    else velocity = -10.0;
+    return velocity;
+}
+
 void VCUInterface::send_msg(std::string symbol, double msg, bool requirement){
     //Convert msg to string.
     std::ostringstream stream;
@@ -61,7 +89,6 @@ void VCUInterface::send_msg(std::string symbol, double msg, bool requirement){
     //Create char array.
     std::string sending = symbol + ":" + value_string;
     const char *buffer_out = sending.c_str();
-    std::cout<<"msg: "<< sending<<std::endl;
     //Sending to VCU.
     if(requirement)
        if (sendto(sock_, buffer_out, sizeof(buffer_out), 0, (struct sockaddr*) &si_VCU_, slen_) == -1) 

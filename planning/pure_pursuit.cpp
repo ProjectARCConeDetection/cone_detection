@@ -10,30 +10,20 @@ void PurePursuit::init(Control control){
 	//Init controls.
 	should_controls_.steering_angle = 0.0;
 	should_controls_.velocity = 0.0;
-	//Init vcu.
-	vcu_.init();
 }
 
-void PurePursuit::calculateControls(Pose pose, double velocity){
+AckermannControl PurePursuit::calculateControls(std::vector<Eigen::Vector2d> path){
+	//Update path.
+	path_ = path;
 	//Calculate controls.
-	should_controls_.steering_angle = calculateSteering(pose, velocity);
-	should_controls_.velocity = calculateVel(pose, velocity);
-	std::cout<<"Velocity: "<<should_controls_.velocity<<"Steering: "<<should_controls_.steering_angle<<std::endl;
-	//Send controls to VCU.
-	vcu_.send_msg("vs",should_controls_.velocity, true, control_.max_absolute_velocity, -100, 0);
-	vcu_.send_msg("ss",should_controls_.steering_angle/180.0*M_PI, true, 
-				   control_.max_steering_angle, -control_.max_steering_angle, 0);
+	should_controls_.steering_angle = calculateSteering();
+	should_controls_.velocity = calculateVel();
+	return should_controls_;
 }
 
-void PurePursuit::startAutonomousMode(bool mode){
-	vcu_.send_msg("cc", 5.0, mode);
-	ros::Duration(0.5).sleep();
-	vcu_.send_msg("am", 1.0, mode);
-}
-
-double PurePursuit::calculateSteering(Pose pose, double velocity){
+double PurePursuit::calculateSteering(){
 	//Empirical linear function to determine the look-ahead-distance.
-	double lad = control_.k2_lad_s + control_.k1_lad_s*velocity;
+	double lad = control_.k2_lad_s + control_.k1_lad_s*velocity_;
 	lad = std::max(lad,control_.lowerbound_lad_s);
 	lad = std::min(lad,control_.upperbound_lad_s);
 	//Calculate reference steering index.
@@ -41,7 +31,7 @@ double PurePursuit::calculateSteering(Pose pose, double velocity){
 	//Calculate distance to reference point.
 	double distance = path::distanceToIndex(ref_index, path_);
 	//Calculate slope.
-	Eigen::Vector2d local_vector = pose.globalToLocal(path_[ref_index]);
+	Eigen::Vector2d local_vector = pose_.globalToLocal(path_[ref_index]);
 	float dy = local_vector(1);
 	float dx = local_vector(0);
 	float alpha = atan2(dy,dx);
@@ -50,16 +40,23 @@ double PurePursuit::calculateSteering(Pose pose, double velocity){
 	return steering_angle;
 }
 
-double PurePursuit::calculateVel(Pose pose, double velocity){
+double PurePursuit::calculateVel(){
 	//First calculate optimal velocity
 	//for the moment take curvature at fix distance lad_v
-	double lad = control_.k2_lad_v + control_.k1_lad_s*velocity;
+	double lad = control_.k2_lad_v + control_.k1_lad_s*velocity_;
 	//Calculate reference curvature index.
 	int ref_index = path::indexOfDistanceFront(lad, path_);
 	//Find upper velocity limits (physical, safety and teach).	
 	double ref_velocity = sqrt(control_.max_lateral_acceleration*curveRadius());
 	ref_velocity= std::min(ref_velocity, control_.max_absolute_velocity);
 	return ref_velocity;
+}
+
+std_msgs::Float32MultiArray PurePursuit::getControlsMsg(){
+	std_msgs::Float32MultiArray control_msg;
+	control_msg.data.push_back(should_controls_.steering_angle);
+	control_msg.data.push_back(should_controls_.velocity);
+	return control_msg;
 }
 
 double PurePursuit::curveRadius(){
@@ -85,4 +82,10 @@ double PurePursuit::curveRadius(){
 	//Preventing radius from nan.
 	if(radius > 2000) radius = 2000;
 	return radius;
+}
+
+void PurePursuit::setPose(Pose pose){pose_ = pose;}
+
+void PurePursuit::setVelocity(double velocity){
+	if(velocity >= 0.0) velocity_ = velocity;
 }

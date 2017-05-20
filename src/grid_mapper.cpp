@@ -38,11 +38,16 @@ std::vector< std::vector<int> > GridMapper::getConeMap(){return cone_map_;}
 
 Pose GridMapper::getPose(){return pose_;}
 
-geometry_msgs::Point GridMapper::getPoseMsg(){
-	geometry_msgs::Point point_msg;
-	point_msg.x = pose_.position(0);
-	point_msg.y = pose_.position(1);
-	return point_msg;
+geometry_msgs::Pose GridMapper::getPoseMsg(){
+	geometry_msgs::Pose pose_msg;
+	pose_msg.position.x = pose_.position(0);
+	pose_msg.position.y = pose_.position(1);
+	pose_msg.position.z = 0.0;
+	pose_msg.orientation.x = pose_.orientation(0);
+	pose_msg.orientation.y = pose_.orientation(1);
+	pose_msg.orientation.z = pose_.orientation(2);
+	pose_msg.orientation.w = pose_.orientation(3);
+	return pose_msg;
 }
 
 nav_msgs::OccupancyGrid GridMapper::getOccupancyGridMap(){

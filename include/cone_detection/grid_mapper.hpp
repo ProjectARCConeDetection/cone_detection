@@ -8,7 +8,6 @@
 #include <math.h> 
 #include <vector>
 
-#include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/OccupancyGrid.h>
 
@@ -22,7 +21,7 @@ public:
 	std::vector< std::vector<int> > getConeMap();
 	nav_msgs::OccupancyGrid getOccupancyGridMap();
 	Pose getPose();
-	geometry_msgs::Point getPoseMsg();
+	geometry_msgs::Pose getPoseMsg();
 	void setPose(Pose pose);
 private:
 	//Current pose.

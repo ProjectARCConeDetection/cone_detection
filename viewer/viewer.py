@@ -34,29 +34,56 @@ class GUI(QtGui.QWidget):
 	def initUI(self):
 		self.setWindowTitle('ARC Cone Detection')
 		#Define layouts.
-		left_layout = QtGui.QHBoxLayout() 
-		right_up_layout = QtGui.QHBoxLayout()
-		right_down_layout = QtGui.QHBoxLayout()
+		upper_layout = QtGui.QHBoxLayout() 
+		lower_left_layout = QtGui.QVBoxLayout()
+		lower_middle_left_layout = QtGui.QVBoxLayout()
+		lower_middle_right_layout = QtGui.QVBoxLayout()
+		lower_right_layout = QtGui.QHBoxLayout()
 		#Get grid area.
 		grid_length, grid_width = self.ros_interface.getSearchingArea()
 		#Path plot.
 		self.plotwidget = pg.PlotWidget()
 		self.plotcurve = pg.ScatterPlotItem()
 		self.plotwidget.addItem(self.plotcurve)
-		self.plotwidget.setXRange(0,25)
+		self.plotwidget.setYRange(0, 100)
 		self.plotwidget.setYRange(-12.5, 12.5)
-		left_layout.addWidget(self.plotwidget)
+		upper_layout.addWidget(self.plotwidget)
 		#Start button.
 		self.start_button = QtGui.QPushButton("System Booting")
 		self.start_button.setFont(QtGui.QFont('SansSerif',15,weight=QtGui.QFont.Bold))
 		self.start_button.setStyleSheet("background-color: yellow")
 		self.start_button.setFixedSize(self.width/4,self.height/8)
-		right_down_layout.addWidget(self.start_button)
+		lower_right_layout.addWidget(self.start_button)
+		#Cone Counter label.
+		label = QtGui.QLabel("Cone counter")
+		label.setStyleSheet('color: white')
+		self.cone_counter_label = QtGui.QTextEdit("0")
+		self.cone_counter_label.setFixedHeight(20)
+		self.cone_counter_label.setFixedWidth(200)
+		lower_left_layout.addWidget(label)
+		lower_left_layout.addWidget(self.cone_counter_label)
+		#Vehicle control label.
+		label = QtGui.QLabel("Steering angle")
+		label.setStyleSheet('color: white')
+		self.steering_label = QtGui.QTextEdit("0.0")
+		self.steering_label.setFixedHeight(20)
+		self.steering_label.setFixedWidth(200)
+		lower_middle_left_layout.addWidget(label)
+		lower_middle_left_layout.addWidget(self.steering_label)
+		label = QtGui.QLabel("Velocity")
+		label.setStyleSheet('color: white')
+		self.velocity_label = QtGui.QTextEdit("0.0")
+		self.velocity_label.setFixedHeight(20)
+		self.velocity_label.setFixedWidth(200)
+		lower_middle_right_layout.addWidget(label)
+		lower_middle_right_layout.addWidget(self.velocity_label)
 		#Set layouts.
 		layout = QtGui.QGridLayout()
-		layout.addLayout(left_layout, 0, 0, 3, 3)
-		layout.addLayout(right_up_layout, 0, 3, 2, 1)
-		layout.addLayout(right_down_layout, 2, 2)
+		layout.addLayout(upper_layout, 0, 0, 2, 4)
+		layout.addLayout(lower_left_layout, 2, 0)
+		layout.addLayout(lower_middle_left_layout, 2, 1)
+		layout.addLayout(lower_middle_right_layout, 2, 2)
+		layout.addLayout(lower_right_layout, 2, 3)
 		self.setLayout(layout)
 		#Set Window geometry and background color.
 		palette = QtGui.QPalette()
@@ -68,6 +95,8 @@ class GUI(QtGui.QWidget):
 	def qtConnections(self):
 		#Start button.
 		self.start_button.clicked.connect(self.changeMode)
+		#Controls.
+		self.ros_interface.controls_signal.connect(self.updateControls)
 		#Cone grid.
 		self.ros_interface.grid_signal.connect(self.updateGrid)
 		#Position.
@@ -79,6 +108,10 @@ class GUI(QtGui.QWidget):
 		self.ros_interface.toAutonomousMode()
 		self.start_button.setStyleSheet("background-color: blue")
 		self.start_button.setText("System started") 
+
+	def updateControls(self, controls):
+		self.steering_label.setText(controls[0])
+		self.velocity_label.setText(controls[1])
 
 	def updateGrid(self, cones):
 		#Get cone position.

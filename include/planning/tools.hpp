@@ -10,9 +10,13 @@
 #include <sys/socket.h>
 #include <vector>
 
+#define buflen_ 512 
+
 struct AckermannControl{
 	double steering_angle;
 	double velocity;
+	//Help function.
+	void print();
 };
 
 struct Control{
@@ -48,6 +52,7 @@ public:
 	VCUInterface();
 	~VCUInterface();
 	void init();
+	double recv_velocity();
 	void send_msg(std::string symbol, double msg, bool requirement);
 	void send_msg(std::string symbol, double msg, bool requirement,
 				  double max_value, double min_value, double shift);
