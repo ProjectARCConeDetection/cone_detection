@@ -4,7 +4,7 @@ void Planner::init(Planning planning) {
 	planning_ = planning;
 }
 
-void Planner::gridAnalyser(const nav_msgs::OccupancyGrid grid) {
+void Planner::gridAnalyser(const nav_msgs::OccupancyGrid grid){
 	double height = grid.info.height;
 	double width = grid.info.width;
 	planning_.resolution = grid.info.resolution;
@@ -13,7 +13,7 @@ void Planner::gridAnalyser(const nav_msgs::OccupancyGrid grid) {
 	}
 }
 
-void Planner::update_conePosition(int x_cell_index, int y_cell_index) {
+void Planner::update_conePosition(int x_cell_index, int y_cell_index){
 	Eigen::Vector2d position_cone;
 	position_cone[0] = x_cell_index*planning_.resolution + planning_.resolution/2;
 	position_cone[1] = y_cell_index*planning_.resolution + planning_.resolution/2 - planning_.searching_width/2;
@@ -27,7 +27,7 @@ void Planner::update_conePosition(int x_cell_index, int y_cell_index) {
 	}
 }
 
-void Planner::updatePositionVector() {
+void Planner::updatePositionVector(){
 	int size =  position_cones_.size();
 	Eigen::Vector2d new_cone = position_cones_[size-1];
 	bool between_cones = false;
@@ -54,7 +54,7 @@ void Planner::updatePositionVector() {
 	else updateEndPath();
 }
 
-void Planner::updateStartPath() {
+void Planner::updateStartPath(){
 	Eigen::Vector2d temp = position_cones_[0];
 	position_cones_[0][0] = 0;
 	position_cones_[0][1] = 0;
@@ -65,7 +65,7 @@ void Planner::updateStartPath() {
 	}
 }
 
-void Planner::updateWholePath() {
+void Planner::updateWholePath(){
 	global_path_.clear();
 	edge_points_.clear();
 	for(int i=0; i<position_cones_.size()-1;i++) {
@@ -74,7 +74,7 @@ void Planner::updateWholePath() {
 			global_path_.push_back(new_global_points[j]);
 }}}
 
-void Planner::updateEndPath() {
+void Planner::updateEndPath(){
 	int size = position_cones_.size();
 	std::vector<Eigen::Vector2d> new_global_points = PathPlanner(position_cones_[size-2], position_cones_[size-1], size-2);
 	for(int i=0; i<new_global_points.size();i++) {
@@ -83,7 +83,7 @@ void Planner::updateEndPath() {
 	for(int i=0; i<position_cones_.size();i++) {
 }}
 
-std::vector<Eigen::Vector2d> Planner::PathPlanner(Eigen::Vector2d position_cone_1, Eigen::Vector2d position_cone_2, int index_position_cone_1) {
+std::vector<Eigen::Vector2d> Planner::PathPlanner(Eigen::Vector2d position_cone_1, Eigen::Vector2d position_cone_2, int index_position_cone_1){
 	double angle = LocalOrientationAngle(position_cone_1, position_cone_2);
 	double length = LocalLengthXAxis(position_cone_1, position_cone_2);
 	std::vector<Eigen::Vector2d> new_global_cosine_points = GlobalControlPoints(CosinePlanner(length, position_cone_1, index_position_cone_1), angle, position_cone_1);
@@ -122,14 +122,14 @@ std::vector<Eigen::Vector2d> Planner::PathPlanner(Eigen::Vector2d position_cone_
 	return new_global_points;
 }
 
-double Planner::LocalOrientationAngle(Eigen::Vector2d position_cone_1, Eigen::Vector2d position_cone_2) {
+double Planner::LocalOrientationAngle(Eigen::Vector2d position_cone_1, Eigen::Vector2d position_cone_2){
 	double delta_y = position_cone_2[1]-position_cone_1[1];
 	double delta_x = position_cone_2[0]-position_cone_1[0];
 	double angle = atan2(delta_y,delta_x);
 	return angle;
 }
 
-double Planner::LocalLengthXAxis(Eigen::Vector2d position_cone_1, Eigen::Vector2d position_cone_2) {
+double Planner::LocalLengthXAxis(Eigen::Vector2d position_cone_1, Eigen::Vector2d position_cone_2){
 	double length = (position_cone_2 - position_cone_1).norm();
 	return length;
 }
@@ -153,7 +153,7 @@ std::vector<Eigen::Vector2d> Planner::CosinePlanner(double length, Eigen::Vector
 	return controller_points;
 }
 
-std::vector<Eigen::Vector2d> Planner::GlobalControlPoints(std::vector<Eigen::Vector2d> local_points, double angle, Eigen::Vector2d position_cone_1) {
+std::vector<Eigen::Vector2d> Planner::GlobalControlPoints(std::vector<Eigen::Vector2d> local_points, double angle, Eigen::Vector2d position_cone_1){
 	Eigen::Matrix2d Rotation_Matrix;
   	Rotation_Matrix <<  cos(angle), -sin(angle),
                         sin(angle), cos(angle);
@@ -167,7 +167,7 @@ std::vector<Eigen::Vector2d> Planner::GlobalControlPoints(std::vector<Eigen::Vec
     return global_controller_points;
 }
 
-std::vector<Eigen::Vector2d> Planner::CircleFiller(Eigen::Vector2d position_cone_1, Eigen::Vector2d edge_point_cone_1, Eigen::Vector2d edge_point_cone_2) {
+std::vector<Eigen::Vector2d> Planner::CircleFiller(Eigen::Vector2d position_cone_1, Eigen::Vector2d edge_point_cone_1, Eigen::Vector2d edge_point_cone_2){
 	double angle_x_edge1 = atan2((edge_point_cone_1[1]-position_cone_1[1]), (edge_point_cone_1[0]-position_cone_1[0]));
 	double angle_x_edge2 = atan2((edge_point_cone_2[1]-position_cone_1[1]), (edge_point_cone_2[0]-position_cone_1[0]));
 	double radian_step = M_PI/200;

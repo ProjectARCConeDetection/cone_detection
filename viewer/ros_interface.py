@@ -28,7 +28,7 @@ class ROSInterface(QtCore.QObject):
 
 	def controlsCallback(self, msg):
 		#Controls list (Steering, velocity).
-		controls = [msg[0], msg[1]]
+		controls = [msg.data[0], msg.data[1]]
 		#Send signal to gui.
 		self.controls_signal.emit(controls)
 

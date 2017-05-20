@@ -2,6 +2,8 @@
 #include <planning/tools.hpp>
 #include <planning/planner.hpp>
 
+#include <cone_detection/tools.hpp>
+
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/Odometry.h>
@@ -21,22 +23,24 @@ Planner planner;
 VCUInterface vcu;
 //Parameter.
 Control control;
+Erod erod;
 Planning planning;
 //Decleration of functions.
 void modeCallback(const std_msgs::Bool::ConstPtr& msg);
-void gridmapCallback(const nav_msgs::OccupancyGrid grid);
+void gridmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& grid);
 void poseCallback(const geometry_msgs::Pose::ConstPtr& msg);
-void gettingParameter(ros::NodeHandle* node, Control* control, Planning* planning);
+void gettingParameter(ros::NodeHandle* node, Control* control, Erod* erod, Planning* planning);
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "path_planner");
 	ros::NodeHandle node;
 	//Getting parameter.
-	gettingParameter(&node,&control,&planning);
+	gettingParameter(&node,&control,&erod,&planning);
+	bool use_vcu = (strlen(*(argv + 1)) == 5) ? false : true;
 	//Init classes.
-	pure_pursuit.init(control);
+	pure_pursuit.init(control,erod);
 	planner.init(planning);
-	// vcu.init();
+	vcu.init(use_vcu);
 	//Init pubs & subs.
 	controls_pub = node.advertise<std_msgs::Float32MultiArray>("/stellgroessen", 1);
 	path_pub = node.advertise<std_msgs::Float32MultiArray>("/path", 10);
@@ -47,7 +51,7 @@ int main(int argc, char** argv){
   	ros::Rate rate(10);
   	while(ros::ok()){
   		ros::spinOnce();
-		// pure_pursuit.setVelocity(vcu.recv_velocity());
+		pure_pursuit.setVelocity(vcu.recv_velocity());
 		rate.sleep();
   	}
 	return 0;
@@ -59,18 +63,18 @@ void modeCallback(const std_msgs::Bool::ConstPtr& msg){
 	vcu.send_msg("am", 1.0, msg->data);
 }
 
-void gridmapCallback(const nav_msgs::OccupancyGrid grid){
-	std::cout << "grid map callback " << std::endl;
+void gridmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& grid){
 	//Path planning.
-	planner.gridAnalyser(grid);
+	planner.gridAnalyser(*grid);
 	//Calculate controls.
 	std::vector<Eigen::Vector2d> path = planner.getGlobalPath();
-	AckermannControl stellgroessen = pure_pursuit.calculateControls(path);
-	stellgroessen.print();
-	//Send controls to VCU.
-	// vcu.send_msg("vs",stellgroessen.velocity, true, control.max_absolute_velocity, -100, 0);
-	// vcu.send_msg("ss",stellgroessen.steering_angle/180.0*M_PI, true, 
-	// 			  control.max_steering_angle, -control.max_steering_angle, 0);
+	if(path.size() > 0){
+		AckermannControl stellgroessen = pure_pursuit.calculateControls(path);
+		//Send controls to VCU.
+		vcu.send_msg("vs",stellgroessen.velocity, true, control.max_absolute_velocity, -100, 0);
+		vcu.send_msg("ss",stellgroessen.steering_angle/180.0*M_PI, true, 
+				  	control.max_steering_angle, -control.max_steering_angle, 0);
+	}
 	//Visualisation.
 	std_msgs::Float32MultiArray global_path_msg = planner.getGlobalPathMsg();
 	path_pub.publish(global_path_msg);
@@ -86,7 +90,7 @@ void poseCallback(const geometry_msgs::Pose::ConstPtr& msg){
 	pure_pursuit.setPose(pose);
 }
 
-void gettingParameter(ros::NodeHandle* node, Control* control, Planning* planning){
+void gettingParameter(ros::NodeHandle* node, Control* control, Erod* erod, Planning* planning){
 	//Get control parameter.
 	node->getParam("/control/distance_interpolation", control->distance_interpolation);
 	node->getParam("/control/K1_LAD_S", control->k1_lad_s);
@@ -98,6 +102,11 @@ void gettingParameter(ros::NodeHandle* node, Control* control, Planning* plannin
 	node->getParam("/control/max_absolute_velocity", control->max_absolute_velocity);
 	node->getParam("/control/max_lateral_acceleration", control->max_lateral_acceleration);
 	node->getParam("/control/max_steering_angle", control->max_steering_angle);
+	//Get erod parameter.
+	node->getParam("/erod/length_laser_to_VI", erod->length_laser_to_VI);
+	node->getParam("/erod/distance_wheel_axis", erod->distance_wheel_axis);
+	node->getParam("/erod/height_laser", erod->height_laser);
+	//Get planning parameter.
 	node->getParam("/path_planning/distance_cone", planning->distance_cone);
 	node->getParam("/path_planning/number_points_x_axis", planning->number_points_x_axis);
 	node->getParam("/detection/searching_length", planning->searching_length);

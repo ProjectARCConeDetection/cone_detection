@@ -14,7 +14,7 @@ class PurePursuit{
 public:
 	PurePursuit();
 	~PurePursuit();
-	void init(Control control);
+	void init(Control control, Erod erod);
 	AckermannControl calculateControls(std::vector<Eigen::Vector2d> path);
 	std_msgs::Float32MultiArray getControlsMsg();
 	void setPose(Pose pose);
@@ -29,6 +29,7 @@ private:
 	double velocity_;
 	//Control parameter.
 	Control control_;
+	Erod erod_;
 	//Helper functions.
 	double calculateSteering();
 	double calculateVel();

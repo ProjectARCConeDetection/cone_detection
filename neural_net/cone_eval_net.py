@@ -60,7 +60,7 @@ class NeuralNet:
 		image[0][:][:][:] =  color.rgb2lab(convertMsgToArray(msg.image)) / 255.0
 		# Labeling.
 		label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image})
-		if(label == [1]):
+		if(label == [0]):
 			msg.label = True
 			self.cone_counter += 1
 			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg", convertMsgToArray(msg.image))

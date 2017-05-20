@@ -51,7 +51,7 @@ class VCUInterface{
 public:
 	VCUInterface();
 	~VCUInterface();
-	void init();
+	void init(bool use_vcu);
 	double recv_velocity();
 	void send_msg(std::string symbol, double msg, bool requirement);
 	void send_msg(std::string symbol, double msg, bool requirement,
@@ -62,6 +62,8 @@ private:
 	struct sockaddr_in si_me_, si_other_, si_VCU_;
 	int sock_;
 	socklen_t slen_;
+	//Use vcu.
+	bool use_vcu_;
 	//Useful functions.
 	void printError(std::string error);
 };

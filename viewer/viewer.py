@@ -45,7 +45,7 @@ class GUI(QtGui.QWidget):
 		self.plotwidget = pg.PlotWidget()
 		self.plotcurve = pg.ScatterPlotItem()
 		self.plotwidget.addItem(self.plotcurve)
-		self.plotwidget.setYRange(0, 100)
+		self.plotwidget.setXRange(0, 100)
 		self.plotwidget.setYRange(-12.5, 12.5)
 		upper_layout.addWidget(self.plotwidget)
 		#Start button.
@@ -110,8 +110,8 @@ class GUI(QtGui.QWidget):
 		self.start_button.setText("System started") 
 
 	def updateControls(self, controls):
-		self.steering_label.setText(controls[0])
-		self.velocity_label.setText(controls[1])
+		self.steering_label.setText(str(controls[0]))
+		self.velocity_label.setText(str(controls[1]))
 
 	def updateGrid(self, cones):
 		#Get cone position.

@@ -44,7 +44,9 @@ VCUInterface::~VCUInterface(){
     send_msg("am", 0.0, true);
 }
 
-void VCUInterface::init(){
+void VCUInterface::init(bool use_vcu){
+    use_vcu_ = use_vcu;
+    if(!use_vcu_) return;
     //Getting parameters.
     memset((char *) &si_me_, 0, sizeof(si_me_));
     si_me_.sin_family = AF_INET;
@@ -60,6 +62,7 @@ void VCUInterface::init(){
 }
 
 double VCUInterface::recv_velocity(){
+    if(!use_vcu_) return -10.0;
     //Receiving.
     int recv_len;
     char buffer_in[buflen_];
@@ -90,7 +93,7 @@ void VCUInterface::send_msg(std::string symbol, double msg, bool requirement){
     std::string sending = symbol + ":" + value_string;
     const char *buffer_out = sending.c_str();
     //Sending to VCU.
-    if(requirement)
+    if(requirement && use_vcu_)
        if (sendto(sock_, buffer_out, sizeof(buffer_out), 0, (struct sockaddr*) &si_VCU_, slen_) == -1) 
           printError("sending " + symbol);
 }
@@ -110,7 +113,7 @@ void VCUInterface::send_msg(std::string symbol, double msg, bool requirement,
     std::string sending = symbol + ":" + value_string;
     const char *buffer_out = sending.c_str();
     //Sending to VCU.
-    if(requirement)
+    if(requirement && use_vcu_)
        if (sendto(sock_, buffer_out, sizeof(buffer_out), 0, (struct sockaddr*) &si_VCU_, slen_) == -1) 
           printError("sending " + symbol);
 }
