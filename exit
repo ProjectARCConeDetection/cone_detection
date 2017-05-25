@@ -1,0 +1,16 @@
+[1mdiff --git a/planning/pure_pursuit.cpp b/planning/pure_pursuit.cpp[m
+[1mindex 10d2f87..d315a2a 100644[m
+[1m--- a/planning/pure_pursuit.cpp[m
+[1m+++ b/planning/pure_pursuit.cpp[m
+[36m@@ -41,10 +41,9 @@[m [mdouble PurePursuit::calculateSteering(){[m
+ 	float dx = local_vector(0);[m
+ 	float alpha = atan2(dy,dx);[m
+ 	//Calculate steering angle using Pure Pursuit.[m
+[31m-	std::cout << "Distance wheel axis: " << erod_.distance_wheel_axis << std::endl;[m
+ 	double steering_angle = atan2(2*erod_.distance_wheel_axis*sin(alpha),distance);[m
+ 	std::cout << "LAD: " << lad << ", distance: " << distance << ", dx: " [m
+[31m-			  << dx << ", dy: " << dy << " and angle: " << steering_angle << std::endl;[m
+[32m+[m			[32m  << dx << ", dy: " << dy << " and angle: " << steering_angle*180/M_PI << std::endl;[m
+ 	return steering_angle;[m
+ }[m
+ [m

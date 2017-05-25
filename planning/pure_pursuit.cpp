@@ -41,10 +41,9 @@ double PurePursuit::calculateSteering(){
 	float dx = local_vector(0);
 	float alpha = atan2(dy,dx);
 	//Calculate steering angle using Pure Pursuit.
-	std::cout << "Distance wheel axis: " << erod_.distance_wheel_axis << std::endl;
 	double steering_angle = atan2(2*erod_.distance_wheel_axis*sin(alpha),distance);
 	std::cout << "LAD: " << lad << ", distance: " << distance << ", dx: " 
-			  << dx << ", dy: " << dy << " and angle: " << steering_angle << std::endl;
+			  << dx << ", dy: " << dy << " and angle: " << steering_angle*180/M_PI << std::endl;
 	return steering_angle;
 }
 
