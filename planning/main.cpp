@@ -6,18 +6,23 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
-#include <nav_msgs/Odometry.h>
-#include <std_msgs/Bool.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <nav_msgs/Odometry.h>
+#include <sensor_msgs/Imu.h>
+#include <std_msgs/Bool.h>
 #include <cone_detection/Path.h>
 
 //Publisher.& Subscriber.
+ros::Publisher car_model_pub;
 ros::Publisher controls_pub;
 ros::Publisher path_pub;
 ros::Subscriber mode_sub;
 ros::Subscriber gridmap_sub;
+ros::Subscriber imu_time_sub;
 ros::Subscriber pose_sub;
 //Init classes.
+CarModel car_model;
 PurePursuit pure_pursuit;
 Planner planner;
 VCUInterface vcu;
@@ -28,6 +33,7 @@ Planning planning;
 //Decleration of functions.
 void modeCallback(const std_msgs::Bool::ConstPtr& msg);
 void gridmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& grid);
+void imuTimeCallback(const sensor_msgs::Imu::ConstPtr& msg);
 void poseCallback(const geometry_msgs::Pose::ConstPtr& msg);
 void gettingParameter(ros::NodeHandle* node, Control* control, Erod* erod, Planning* planning);
 
@@ -38,20 +44,27 @@ int main(int argc, char** argv){
 	gettingParameter(&node,&control,&erod,&planning);
 	bool use_vcu = (strlen(*(argv + 1)) == 5) ? false : true;
 	//Init classes.
+	car_model.init(erod);
 	pure_pursuit.init(control,erod);
 	planner.init(planning);
-	vcu.init(use_vcu);
+	vcu.init(use_vcu, &car_model);
 	//Init pubs & subs.
+	car_model_pub = node.advertise<geometry_msgs::TwistStamped>("/car_model_velocity", 1);
 	controls_pub = node.advertise<std_msgs::Float32MultiArray>("/stellgroessen", 1);
 	path_pub = node.advertise<std_msgs::Float32MultiArray>("/path", 10);
 	mode_sub = node.subscribe("/mode", 1, modeCallback);
 	gridmap_sub = node.subscribe("/cones_grid", 1, gridmapCallback);
+	imu_time_sub = node.subscribe("/imu0", 1, imuTimeCallback);
 	pose_sub = node.subscribe("/car_pose", 1, poseCallback);
   	//Spinning.
   	ros::Rate rate(10);
   	while(ros::ok()){
   		ros::spinOnce();
-		pure_pursuit.setVelocity(vcu.recv_velocity());
+  		//Update and publish car model.
+  		vcu.recv_car_model();
+  		car_model_pub.publish(car_model.getTwistMsg());
+  		//Pure pursuit update.
+		pure_pursuit.setVelocity(car_model.getVelocity().norm());
 		rate.sleep();
   	}
 	return 0;
@@ -80,6 +93,10 @@ void gridmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& grid){
 	path_pub.publish(global_path_msg);
 	std_msgs::Float32MultiArray control_msg = pure_pursuit.getControlsMsg();
 	controls_pub.publish(control_msg);
+}
+
+void imuTimeCallback(const sensor_msgs::Imu::ConstPtr& msg){
+  car_model.setTimeStamp(msg->header.stamp);
 }
 
 void poseCallback(const geometry_msgs::Pose::ConstPtr& msg){

@@ -46,6 +46,7 @@ struct Erod{
 	double distance_wheel_axis;
 	double length_laser_to_VI;
 	double height_laser;
+	double width_wheel_axis;
 };
 
 struct Pose{

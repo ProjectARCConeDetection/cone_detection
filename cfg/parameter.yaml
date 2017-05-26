@@ -25,6 +25,7 @@ cam/distortion_vector: [0.079264, -0.149967, 0.000716, 0.001749, 0.000000]
 erod/length_laser_to_VI: 2.2 #Distance laser to VI - Sensor.
 erod/distance_wheel_axis: 2.35585  #[m], distance between front and rear axis.
 erod/height_laser: 1.33 #Distance laser to ground.
+erod/width_wheel_axis: 1.5 #[m], distance wheel joints.
 #Cone parameter.
 cone/height_meter: 1.0 #Height of cone[meter].
 cone/height_pixel: 60 #Height of cone[pixel].

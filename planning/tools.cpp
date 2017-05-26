@@ -49,6 +49,70 @@ int currentArray(std::vector<Eigen::Vector2d> positions, Eigen::Vector2d positio
 }
 }//namespace path.
 
+//Car Model.
+CarModel::CarModel(){}
+
+CarModel::~CarModel(){}
+
+void CarModel::init(Erod erod){
+    //Init current measurements.
+    steering_angle_ = 0.0;
+    velocity_left_ = 0.0;
+    velocity_right_ = 0.0;
+    //Init parameter.
+    distance_rear_front_axis_ = erod.distance_wheel_axis;
+    width_axis_ = erod.width_wheel_axis; 
+}    
+
+void CarModel::updateModel(){
+    //Geometric calculations: Equal angular velocities and current center of rotation on
+    //horizontal line from rear axle.
+    if(fabs(steering_angle_) <= 0.01) {
+        local_velocity_(0) = (velocity_right_ + velocity_left_ ) / 2;
+        local_velocity_(1) = 0; 
+    }
+    else { 
+        double v_rear = (velocity_right_ + velocity_left_ ) / 2;
+        double beta = M_PI / 2 - fabs(steering_angle_);
+        double r1 = distance_rear_front_axis_ * tan(beta);
+        double r2 = distance_rear_front_axis_ / cos(beta);
+        double w = v_rear / r1;
+        double v_front = w * r2;
+        local_velocity_(0) = cos(steering_angle_) * v_front;
+        local_velocity_(1) = sin (steering_angle_) * v_front;
+    }
+    //Rotate due to tilted VI Sensor.
+    float tilting_angle = 11.0;
+    tilted_velocity_(0) = local_velocity_(1);
+    tilted_velocity_(1) = sin(tilting_angle/180*M_PI)*local_velocity_(0);
+    tilted_velocity_(2) = cos(tilting_angle/180*M_PI)*local_velocity_(0); 
+    //Sleeping.
+    usleep(100000); 
+}
+
+geometry_msgs::TwistStamped CarModel::getTwistMsg(){
+    geometry_msgs::TwistStamped twist;
+    twist.header.stamp = timestamp_;
+    twist.twist.linear.x = tilted_velocity_(0);
+    twist.twist.linear.y  = tilted_velocity_(1);
+    twist.twist.linear.z  = tilted_velocity_(2);
+    return twist;
+}
+
+Eigen::Vector3d CarModel::getVelocity(){return tilted_velocity_;}
+
+void CarModel::setSteeringAngle(double steering_angle){
+    steering_angle_ = steering_angle; 
+    updateModel();
+}
+
+void CarModel::setRearLeftWheelVel(double vel){velocity_left_ = vel;}
+
+void CarModel::setRearRightWheelVel(double vel){velocity_right_ = vel;}
+
+void CarModel::setTimeStamp(ros::Time timestamp){timestamp_ = timestamp;}
+
+//VCU Interface.
 VCUInterface::VCUInterface(){}
 
 VCUInterface::~VCUInterface(){
@@ -56,7 +120,10 @@ VCUInterface::~VCUInterface(){
     send_msg("am", 0.0, true);
 }
 
-void VCUInterface::init(bool use_vcu){
+void VCUInterface::init(bool use_vcu, CarModel* car_model){
+    //Init car model.
+    car_model_ = *car_model;
+    //Use vcu.
     use_vcu_ = use_vcu;
     if(!use_vcu_) return;
     //Getting parameters.
@@ -73,8 +140,7 @@ void VCUInterface::init(bool use_vcu){
     if(bind(sock_, (struct sockaddr*)&si_me_, sizeof(si_me_)) == -1) printError("binding");
 }
 
-double VCUInterface::recv_velocity(){
-    if(!use_vcu_) return -10.0;
+void VCUInterface::recv_car_model(){
     //Receiving.
     int recv_len;
     char buffer_in[buflen_];
@@ -90,10 +156,12 @@ double VCUInterface::recv_velocity(){
     double value = atof(buffer);
     //Answers.
     double velocity;
-    if(kind == "rr") velocity = value;
-    else if(kind == "rl") velocity = value;
-    else velocity = -10.0;
-    return velocity;
+    if(kind == "rr") car_model_.setRearRightWheelVel(value);
+    else if(kind == "rl") car_model_.setRearLeftWheelVel(value);
+    else if(kind == "si"){
+        value = (value-1000)*M_PI/180.0;
+        car_model_.setSteeringAngle(value);
+    }
 }
 
 void VCUInterface::send_msg(std::string symbol, double msg, bool requirement){

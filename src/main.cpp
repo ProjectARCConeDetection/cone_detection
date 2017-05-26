@@ -160,6 +160,7 @@ void gettingParameter(ros::NodeHandle* node, std::string* candidate_path,
 	node->getParam("/erod/length_laser_to_VI", erod->length_laser_to_VI);
 	node->getParam("/erod/distance_wheel_axis", erod->distance_wheel_axis);
 	node->getParam("/erod/height_laser", erod->height_laser);
+	node->getParam("/erod/width_wheel_axis", erod->width_wheel_axis);
 	//Get detection parameter.
 	node->getParam("/detection/cone_area", detection->cone_area);
 	node->getParam("/detection/searching_length", detection->searching_length);

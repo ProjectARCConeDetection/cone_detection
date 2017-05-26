@@ -1,6 +1,8 @@
 #ifndef TOOLS_PLANNING_HPP
 #define TOOLS_PLANNING_HPP
 
+#include <cone_detection/tools.hpp>
+
 #include <arpa/inet.h>
 #include <eigen3/Eigen/Eigen>
 #include <iostream>
@@ -9,6 +11,9 @@
 #include <string>
 #include <sys/socket.h>
 #include <vector>
+
+#include <ros/ros.h>
+#include <geometry_msgs/TwistStamped.h>
 
 #define buflen_ 512 
 
@@ -48,12 +53,37 @@ namespace path{
 	int currentArray(std::vector<Eigen::Vector2d> positions, Eigen::Vector2d position);
 }//namespace path.
 
+class CarModel{
+public:
+	CarModel();
+	~CarModel();
+	void init(Erod erod);	
+	void updateModel();
+	geometry_msgs::TwistStamped getTwistMsg();
+	Eigen::Vector3d getVelocity();
+	void setSteeringAngle(double steering_angle);
+	void setRearLeftWheelVel(double vel);
+	void setRearRightWheelVel(double vel);
+	void setTimeStamp(ros::Time timestamp);
+private:
+	Eigen::Vector2d local_velocity_;
+	Eigen::Vector3d tilted_velocity_;
+	//Current measurements.
+	double steering_angle_;
+	double velocity_left_;
+	double velocity_right_;
+	ros::Time timestamp_;
+	//Parameter.
+	float distance_rear_front_axis_;
+	float width_axis_;
+};
+
 class VCUInterface{
 public:
 	VCUInterface();
 	~VCUInterface();
-	void init(bool use_vcu);
-	double recv_velocity();
+	void init(bool use_vcu, CarModel* car_model);
+	void recv_car_model();
 	void send_msg(std::string symbol, double msg, bool requirement);
 	void send_msg(std::string symbol, double msg, bool requirement,
 				  double max_value, double min_value, double shift);
@@ -65,6 +95,8 @@ private:
 	socklen_t slen_;
 	//Use vcu.
 	bool use_vcu_;
+	//Car Model to update.
+	CarModel car_model_;
 	//Useful functions.
 	void printError(std::string error);
 };
