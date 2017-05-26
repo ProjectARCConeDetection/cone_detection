@@ -6,7 +6,7 @@ GridMapper::~GridMapper(){}
 
 void GridMapper::init(Detection detection){
 	//Init pose.
-	pose_.position = Eigen::Vector2d(0,0);
+	pose_.position = Eigen::Vector2d(-2.2,0);
 	pose_.orientation = Eigen::Vector4d(0,0,0,1);
 	//Set grid parameter.
 	detection_ = detection;
@@ -20,7 +20,8 @@ void GridMapper::updateConeMap(Eigen::Vector2d cone_position){
 	double y = cone_position(1);
 	Eigen::Vector2d cone_indizes = findGridElement(x,y);
 	// Updating cone map.
-	if(cone_indizes(1) >= 0) validConeArea(cone_indizes);
+	validConeArea(cone_indizes);
+	//if(cone_indizes(1) >= 0) validConeArea(cone_indizes);
 }
 
 Eigen::Vector2d GridMapper::convertLocalToGlobal(Candidate cone){
@@ -94,11 +95,18 @@ void GridMapper::validConeArea(Eigen::Vector2d cone_index){
 	//Convert cone area to index.
 	int area_index = detection_.cone_area/detection_.searching_resolution;
 	//Check if cone already exists.
-	for(int x = cone_index(0)-area_index; x<cone_index(0)+area_index; ++x)
-		for(int y = cone_index(1)-area_index; y<cone_index(1)+area_index; ++y)
-			if((bool)cone_map_[x][y]) return;
+	int x = std::max(cone_index(0)-area_index,0.0);
+	int x_upper_bound = std::min(detection_.searching_length/detection_.searching_resolution-1, (double)x+2*area_index);
+	for(;x<x_upper_bound;x++) {
+		int y = std::max(cone_index(1)-area_index,0.0);
+		int y_upper_bound = std::min(detection_.searching_width/detection_.searching_resolution-1, (double)y+2*area_index);
+		for(; y<y_upper_bound; y++) {
+			if(cone_map_[x][y]==1) {
+				return;
+			}
+	}}
 	//Fill cone area iff cone is not in map.
-	cone_map_[cone_index(0)][cone_index(1)] = 1;		
+	cone_map_[cone_index(0)][cone_index(1)] = 1;	
 }
 
 void GridMapper::setPose(Pose pose){pose_ = pose;}

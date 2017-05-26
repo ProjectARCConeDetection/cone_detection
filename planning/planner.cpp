@@ -2,6 +2,11 @@
 
 void Planner::init(Planning planning) {
 	planning_ = planning;
+	//Init path.
+	for(int i=0; i<10;i++){ 
+		Eigen::Vector2d init_point(i*0.5,0.0);
+		global_path_.push_back(init_point);
+	}
 }
 
 void Planner::gridAnalyser(const nav_msgs::OccupancyGrid grid){
@@ -55,6 +60,8 @@ void Planner::updatePositionVector(){
 }
 
 void Planner::updateStartPath(){
+	//Clear init path.
+	global_path_.clear();
 	Eigen::Vector2d temp = position_cones_[0];
 	position_cones_[0][0] = 0;
 	position_cones_[0][1] = 0;

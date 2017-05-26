@@ -43,8 +43,9 @@ struct Planning{
 
 namespace path{
 	double distanceBetween(int base_index,int target_index,std::vector<Eigen::Vector2d> positions);
-	double distanceToIndex(int target_index,std::vector<Eigen::Vector2d> positions);
-	int indexOfDistanceFront(double max_distance,std::vector<Eigen::Vector2d> positions);
+	double distanceToIndex(int target_index,std::vector<Eigen::Vector2d> positions, int current_array_index);
+	int indexOfDistanceFront(double max_distance,std::vector<Eigen::Vector2d> positions, Eigen::Vector2d position);
+	int currentArray(std::vector<Eigen::Vector2d> positions, Eigen::Vector2d position);
 }//namespace path.
 
 class VCUInterface{

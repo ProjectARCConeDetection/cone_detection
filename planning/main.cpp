@@ -72,7 +72,7 @@ void gridmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& grid){
 		AckermannControl stellgroessen = pure_pursuit.calculateControls(path);
 		//Send controls to VCU.
 		vcu.send_msg("vs",stellgroessen.velocity, true, control.max_absolute_velocity, -100, 0);
-		vcu.send_msg("ss",stellgroessen.steering_angle/180.0*M_PI, true, 
+		vcu.send_msg("ss",stellgroessen.steering_angle*180/M_PI, true, 
 				  	control.max_steering_angle, -control.max_steering_angle, 0);
 	}
 	//Visualisation.
