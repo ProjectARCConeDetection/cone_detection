@@ -65,7 +65,6 @@ Eigen::Vector3d Pose::euler(){
 Eigen::Vector2d Pose::globalToLocal(Eigen::Vector2d global){
   //Translatation
   Eigen::Vector3d temp = transforms::to3D(global - position);
-  std::cout << "Global: " << global << " and position: " << position << std::endl;
   //Rotation
   Eigen::Matrix3d R = transforms::getRotationMatrix(orientation);
   Eigen::Matrix3d T = R.transpose();

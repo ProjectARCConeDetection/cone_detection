@@ -126,6 +126,7 @@ void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg){
 	temp_position += trans_vi_laser;
 	rovio_pose.position = transforms::to2D(temp_position);
   	//Set pose.
+  	rovio_pose.print();
   	grid_mapper.setPose(rovio_pose);
 }
 

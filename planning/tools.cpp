@@ -29,7 +29,6 @@ double distanceToIndex(int target_index,std::vector<Eigen::Vector2d> positions, 
 int indexOfDistanceFront(double max_distance,std::vector<Eigen::Vector2d> positions, Eigen::Vector2d position){
     double distance = 0.0;
     int index = currentArray(positions, position);
-    std::cout << "currentArray: " << index << std::endl;
     while((distance < max_distance) && (index < positions.size()-2)){
         distance += distanceBetween(index,index+1,positions);
         index++;
@@ -86,8 +85,6 @@ void CarModel::updateModel(){
     tilted_velocity_(0) = local_velocity_(1);
     tilted_velocity_(1) = sin(tilting_angle/180*M_PI)*local_velocity_(0);
     tilted_velocity_(2) = cos(tilting_angle/180*M_PI)*local_velocity_(0); 
-    //Sleeping.
-    usleep(100000); 
 }
 
 geometry_msgs::TwistStamped CarModel::getTwistMsg(){
