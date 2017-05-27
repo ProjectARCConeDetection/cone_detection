@@ -40,8 +40,8 @@ detection/intensity_threshold: 100 #Minimal intensity of detected objects.
 neural_net/datasets: ['biberist_20_4', 'hoengg_18_05']
 neural_net/datasets_test: ['hoengg_18_05']
 #Paths.
-candidate_path: '/home/arcsystem/cones/candidates/' #Path to candidate images.
-model_path: '/home/arcsystem/cones/models/' #Path to trained models.
+candidate_path: '/home/sele/cones/candidates/' #Path to candidate images.
+model_path: '/home/sele/cones/models/' #Path to trained models.
 #Control.
 control/distance_interpolation: 3 #Distance of three points for curvature calculation.
 control/K1_LAD_S: 1.5 #Dynamic part for look ahead distance steer.

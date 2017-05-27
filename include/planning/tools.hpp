@@ -96,7 +96,7 @@ private:
 	//Use vcu.
 	bool use_vcu_;
 	//Car Model to update.
-	CarModel car_model_;
+	CarModel* car_model_;
 	//Useful functions.
 	void printError(std::string error);
 };

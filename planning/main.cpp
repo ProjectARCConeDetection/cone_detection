@@ -11,6 +11,7 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Float64.h>
 #include <cone_detection/Path.h>
 
 //Publisher.& Subscriber.
@@ -21,6 +22,9 @@ ros::Subscriber mode_sub;
 ros::Subscriber gridmap_sub;
 ros::Subscriber imu_time_sub;
 ros::Subscriber pose_sub;
+ros::Subscriber steering_sub;
+ros::Subscriber wheel_left_sub;
+ros::Subscriber wheel_right_sub;
 //Init classes.
 CarModel car_model;
 PurePursuit pure_pursuit;
@@ -35,6 +39,9 @@ void modeCallback(const std_msgs::Bool::ConstPtr& msg);
 void gridmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& grid);
 void imuTimeCallback(const sensor_msgs::Imu::ConstPtr& msg);
 void poseCallback(const geometry_msgs::Pose::ConstPtr& msg);
+void steeringCallback(const std_msgs::Float64::ConstPtr& msg);
+void wheelLeftCallback(const std_msgs::Float64::ConstPtr& msg);
+void wheelRightCallback(const std_msgs::Float64::ConstPtr& msg);
 void gettingParameter(ros::NodeHandle* node, Control* control, Erod* erod, Planning* planning);
 
 int main(int argc, char** argv){
@@ -56,6 +63,9 @@ int main(int argc, char** argv){
 	gridmap_sub = node.subscribe("/cones_grid", 1, gridmapCallback);
 	imu_time_sub = node.subscribe("/imu0", 1, imuTimeCallback);
 	pose_sub = node.subscribe("/car_pose", 1, poseCallback);
+	steering_sub = node.subscribe("/state_steering_angle", 1, steeringCallback);
+	wheel_left_sub = node.subscribe("/wheel_rear_left", 1, wheelLeftCallback);
+	wheel_right_sub = node.subscribe("/wheel_rear_right", 1, wheelRightCallback);
   	//Spinning.
   	ros::Rate rate(10);
   	while(ros::ok()){
@@ -105,6 +115,17 @@ void poseCallback(const geometry_msgs::Pose::ConstPtr& msg){
 	pose.orientation = Eigen::Vector4d(msg->orientation.x, msg->orientation.y, 
 									   msg->orientation.z, msg->orientation.w);
 	pure_pursuit.setPose(pose);
+}
+
+void steeringCallback(const std_msgs::Float64::ConstPtr& msg){
+	car_model.setSteeringAngle(msg->data);
+}
+
+void wheelLeftCallback(const std_msgs::Float64::ConstPtr& msg){
+	car_model.setRearLeftWheelVel(msg->data);
+}
+void wheelRightCallback(const std_msgs::Float64::ConstPtr& msg){
+	car_model.setRearRightWheelVel(msg->data);
 }
 
 void gettingParameter(ros::NodeHandle* node, Control* control, Erod* erod, Planning* planning){

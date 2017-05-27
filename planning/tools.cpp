@@ -119,7 +119,7 @@ VCUInterface::~VCUInterface(){
 
 void VCUInterface::init(bool use_vcu, CarModel* car_model){
     //Init car model.
-    car_model_ = *car_model;
+    car_model_ = car_model;
     //Use vcu.
     use_vcu_ = use_vcu;
     if(!use_vcu_) return;
@@ -138,6 +138,7 @@ void VCUInterface::init(bool use_vcu, CarModel* car_model){
 }
 
 void VCUInterface::recv_car_model(){
+    if(!use_vcu_) return;
     //Receiving.
     int recv_len;
     char buffer_in[buflen_];
@@ -152,12 +153,11 @@ void VCUInterface::recv_car_model(){
     const char *buffer = value_string.c_str();
     double value = atof(buffer);
     //Answers.
-    double velocity;
-    if(kind == "rr") car_model_.setRearRightWheelVel(value);
-    else if(kind == "rl") car_model_.setRearLeftWheelVel(value);
+    if(kind == "rr") car_model_->setRearRightWheelVel(value);
+    else if(kind == "rl") car_model_->setRearLeftWheelVel(value);
     else if(kind == "si"){
         value = (value-1000)*M_PI/180.0;
-        car_model_.setSteeringAngle(value);
+        car_model_->setSteeringAngle(value);
     }
 }
 
