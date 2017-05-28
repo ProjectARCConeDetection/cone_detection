@@ -86,13 +86,12 @@ void Planner::updateEndPath(){
 	std::vector<Eigen::Vector2d> new_global_points = PathPlanner(position_cones_[size-2], position_cones_[size-1], size-2);
 	for(int i=0; i<new_global_points.size();i++) {
 		global_path_.push_back(new_global_points[i]);
-	}
-	for(int i=0; i<position_cones_.size();i++) {
 }}
 
 std::vector<Eigen::Vector2d> Planner::PathPlanner(Eigen::Vector2d position_cone_1, Eigen::Vector2d position_cone_2, int index_position_cone_1){
 	double angle = LocalOrientationAngle(position_cone_1, position_cone_2);
 	double length = LocalLengthXAxis(position_cone_1, position_cone_2);
+	if(position_cone_1[0]==0 && position_cone_1[1]==0) return startPath(position_cone_2, angle, length);
 	std::vector<Eigen::Vector2d> new_global_cosine_points = GlobalControlPoints(CosinePlanner(length, position_cone_1, index_position_cone_1), angle, position_cone_1);
 	edge_points_.push_back(new_global_cosine_points[0]);
 	edge_points_.push_back(new_global_cosine_points[new_global_cosine_points.size()-1]);
@@ -127,6 +126,22 @@ std::vector<Eigen::Vector2d> Planner::PathPlanner(Eigen::Vector2d position_cone_
 			new_global_points.push_back(new_global_cosine_points[i]);					
 	}}
 	return new_global_points;
+}
+
+std::vector<Eigen::Vector2d> Planner::startPath(Eigen::Vector2d position_cone_2, double angle, double length) {
+	std::vector<Eigen::Vector2d> controller_points;
+	Eigen::Vector2d controller_point;
+	double delta_x = length/planning_.number_points_x_axis;
+	for(int i=0; i<(planning_.number_points_x_axis+1); i++) {
+		controller_point[0] = delta_x*i;
+		controller_point[1] = planning_.distance_cone*cos((controller_point[0]/length)*M_PI/2+M_PI/2);
+		controller_points.push_back(controller_point);
+	}
+	Eigen::Vector2d position_cone_1(0,0);
+	controller_points = GlobalControlPoints(controller_points, angle, position_cone_1);
+	edge_points_.push_back(controller_points[0]);
+	edge_points_.push_back(controller_points[controller_points.size()-1]);
+	return controller_points;
 }
 
 double Planner::LocalOrientationAngle(Eigen::Vector2d position_cone_1, Eigen::Vector2d position_cone_2){

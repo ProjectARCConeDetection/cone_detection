@@ -46,7 +46,7 @@ class GUI(QtGui.QWidget):
 		self.plotcurve = pg.ScatterPlotItem()
 		self.plotwidget.addItem(self.plotcurve)
 		self.plotwidget.setXRange(0, 30)
-		self.plotwidget.setYRange(-5, 5)
+		self.plotwidget.setYRange(-15, 15)
 		upper_layout.addWidget(self.plotwidget)
 		#Start button.
 		self.start_button = QtGui.QPushButton("System Booting")
