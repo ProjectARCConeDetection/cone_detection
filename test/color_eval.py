@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from net import *
-
 import os
 import numpy as np
 import cv2
@@ -29,7 +27,7 @@ def deleteFolderContent(path):
 	for element in os.listdir(path):
 		os.remove(os.path.join(path, element))
 
-class NeuralNet:
+class ColorEvaluator:
 	def __init__(self):
 		#Init publisher and subscriber.
 		rospy.Subscriber('/candidates', Label, self.labeling, queue_size=10)
@@ -62,6 +60,6 @@ if __name__ == '__main__':
 	deleteFolderContent(path_to_candidate + "cones/")
 	deleteFolderContent(path_to_candidate + "candidates/")
 	#Init neural net.
-	neural_net = NeuralNet()
+	evaluator = ColorEvaluator()
 	#Spinning.
 	rospy.spin()

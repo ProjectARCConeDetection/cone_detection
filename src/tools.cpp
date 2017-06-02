@@ -49,12 +49,12 @@ Eigen::Vector3d Pose::euler(){
     // roll (x-axis rotation)
     double t0 = +2.0 * (quat(3) * quat(0) + quat(1) * quat(2));
     double t1 = +1.0 - 2.0 * (quat(0) * quat(0) + ysqr);
-    euler(0) = std::atan2(t0, t1);
+    euler(1) = std::atan2(t0, t1);
     // pitch (y-axis rotation)
     double t2 = +2.0 * (quat(3) * quat(1) - quat(2) * quat(0));
     t2 = t2 > 1.0 ? 1.0 : t2;
     t2 = t2 < -1.0 ? -1.0 : t2;
-    euler(1) = std::asin(t2);
+    euler(0) = -std::asin(t2);
     // yaw (z-axis rotation)
     double t3 = +2.0 * (quat(3) * quat(2) + quat(0) * quat(1));
     double t4 = +1.0 - 2.0 * (ysqr + quat(2) * quat(2));  

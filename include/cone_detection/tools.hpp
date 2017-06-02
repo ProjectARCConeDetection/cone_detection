@@ -35,7 +35,8 @@ struct Cone{
 };
 
 struct Detection{
-	double cone_area;
+	double cone_area_x;
+	double cone_area_y;
 	double intensity_threshold;
 	double searching_length;
 	double searching_resolution;

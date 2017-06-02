@@ -93,13 +93,14 @@ void GridMapper::initConeMap(){
 
 void GridMapper::validConeArea(Eigen::Vector2d cone_index){
 	//Convert cone area to index.
-	int area_index = detection_.cone_area/detection_.searching_resolution;
+	int area_index_x = detection_.cone_area_x/detection_.searching_resolution;
+	int area_index_y = detection_.cone_area_y/detection_.searching_resolution;
 	//Check if cone already exists.
-	int x = std::max(cone_index(0)-area_index,0.0);
-	int x_upper_bound = std::min(detection_.searching_length/detection_.searching_resolution-1, (double)x+2*area_index);
+	int x = std::max(cone_index(0)-area_index_x,0.0);
+	int x_upper_bound = std::min(detection_.searching_length/detection_.searching_resolution-1, (double)x+2*area_index_x);
 	for(;x<x_upper_bound;x++) {
-		int y = std::max(cone_index(1)-area_index,0.0);
-		int y_upper_bound = std::min(detection_.searching_width/detection_.searching_resolution-1, (double)y+2*area_index);
+		int y = std::max(cone_index(1)-area_index_y,0.0);
+		int y_upper_bound = std::min(detection_.searching_width/detection_.searching_resolution-1, (double)y+2*area_index_y);
 		for(; y<y_upper_bound; y++) {
 			if(cone_map_[x][y]==1) {
 				return;

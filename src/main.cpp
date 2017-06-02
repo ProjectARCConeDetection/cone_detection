@@ -7,6 +7,7 @@
 #include <cone_detection/Label.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/Odometry.h>
+#include <tf/transform_broadcaster.h>
 
 //Publisher.
 ros::Publisher candidates_pub;
@@ -87,6 +88,13 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	//Pose visualisation.
 	geometry_msgs::Pose pose = grid_mapper.getPoseMsg();
 	position_pub.publish(pose);
+	//Tf orientation visualisation.
+	static tf::TransformBroadcaster br;
+	tf::Transform transform;
+	transform.setOrigin(tf::Vector3(0,0,0));
+	transform.setRotation(tf::Quaternion(pose.orientation.x, pose.orientation.y, 
+										 pose.orientation.z, pose.orientation.w));
+	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "erod"));
 	//Update cone visualisation.
     // image_handler.showCones(grid_mapper.getConeMap(), grid_mapper.getPose());
 	//Clear vectors.
@@ -114,10 +122,10 @@ void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg){
 	Eigen::Vector4d temp_orientation = Eigen::Vector4d(temp.orientation.x, temp.orientation.y, 
 											 		   temp.orientation.z, temp.orientation.w);
 	//Transfrom orientation.
-	Eigen::Vector4d init_quat(-0.7818,0.0086,-0.0001,-0.6275);
+	Eigen::Vector4d init_quat(-0.7808,-0.021,0.0002,-0.6244);
 	Eigen::Vector4d init_quat_soll(0,0,0,1);	
-	Eigen::Vector4d quat_init_trafo = quat::diffQuaternion(init_quat_soll, init_quat);
-  	rovio_pose.orientation = quat::diffQuaternion(temp_orientation, quat_init_trafo);
+	Eigen::Vector4d quat_init_trafo = quat::diffQuaternion(init_quat, init_quat_soll);
+  	rovio_pose.orientation = quat::diffQuaternion(quat_init_trafo, temp_orientation);
   	//Transform position.
   	temp_position = Eigen::Vector3d(-temp_position(1), temp_position(0), temp_position(2));
   	temp_position(0) *= cos(11.0/180.0*M_PI);
@@ -127,6 +135,12 @@ void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg){
 	rovio_pose.position = transforms::to2D(temp_position);
   	//Set pose.
   	grid_mapper.setPose(rovio_pose);
+  	//Orientation check.
+  	Eigen::Vector3d euler = rovio_pose.euler()*180/M_PI;
+  	std::cout << "------------------------------------------------------" << std::endl;
+  	std::cout << "Angle: " << euler(0) << " " << euler(1) << " " << euler(2) << std::endl;
+  	std::cout << "Quat: " << rovio_pose.orientation(0) <<  " " << rovio_pose.orientation(1) <<  " " 
+  						  << rovio_pose.orientation(2) <<  " " << rovio_pose.orientation(3) <<  std::endl;
 }
 
 void publishCandidates(std::vector <Candidate> xyz_index_vector,
@@ -162,7 +176,8 @@ void gettingParameter(ros::NodeHandle* node, std::string* candidate_path,
 	node->getParam("/erod/height_laser", erod->height_laser);
 	node->getParam("/erod/width_wheel_axis", erod->width_wheel_axis);
 	//Get detection parameter.
-	node->getParam("/detection/cone_area", detection->cone_area);
+	node->getParam("/detection/cone_area_x", detection->cone_area_x);
+	node->getParam("/detection/cone_area_y", detection->cone_area_y);
 	node->getParam("/detection/searching_length", detection->searching_length);
 	node->getParam("/detection/searching_resolution", detection->searching_resolution);
 	node->getParam("/detection/searching_width", detection->searching_width);	

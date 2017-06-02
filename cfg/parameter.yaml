@@ -31,10 +31,11 @@ cone/height_meter: 1.0 #Height of cone[meter].
 cone/height_pixel: 60 #Height of cone[pixel].
 cone/width_pixel: 50 #Width of cone[pixel].
 #Detection parameter.
-detection/cone_area: 2 #Length of quadratic cone area in grid map[meter].
+detection/cone_area_x: 4 #Length of cone area in grid map[meter] in driving direction.
+detection/cone_area_y: 10 #Length of cone area in grid map[meter] in orthogonal driving direction.
 detection/searching_length: 150 #x-Range for searching.
 detection/searching_resolution: 0.1 #Grid resolution.
-detection/searching_width: 12.5 #y-Range for searching.
+detection/searching_width: 3 #y-Range for searching.
 detection/intensity_threshold: 100 #Minimal intensity of detected objects.
 #Neural Net.
 neural_net/datasets: ['biberist_20_4', 'hoengg_18_05']
