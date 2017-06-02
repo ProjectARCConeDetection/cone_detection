@@ -17,7 +17,7 @@ ros::Publisher position_pub;
 ros::Subscriber cloud_sub;
 ros::Subscriber raw_image_sub;
 ros::Subscriber cones_sub;
-ros::Subscriber rovio_sub;
+ros::Subscriber orb_sub;
 //Init classes.
 LaserDetection cone_detector;
 ImageHandler image_handler;
@@ -27,7 +27,7 @@ int counter=0;
 void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
 void conesCallback(const cone_detection::Label::ConstPtr& msg);
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg);
-void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg);
+void orbCallback(const nav_msgs::Odometry::ConstPtr& msg);
 void publishCandidates(std::vector <Candidate> xyz_index_vector,
 					   std::vector<cv::Mat> candidates, std::vector<int> candidate_indizes);
 void gettingParameter(ros::NodeHandle* node, std::string* candidate_path,
@@ -52,7 +52,8 @@ int main(int argc, char** argv){
 	cloud_sub = node.subscribe("/velodyne_points", 10, cloudCallback);
 	raw_image_sub = node.subscribe("/usb_cam/image_raw", 10, imageCallback);
 	cones_sub = node.subscribe("/cones", 10, conesCallback);
-	rovio_sub = node.subscribe("/rovio/odometry", 10, rovioCallback);
+	// orb_sub = node.subscribe("/orb/odometry", 10, orbCallback);
+	orb_sub = node.subscribe("/orb_slam2/odometry", 10, orbCallback);
   	//Spinning.
   	ros::Rate rate(10);
   	while(ros::ok()){
@@ -89,13 +90,6 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	//Pose visualisation.
 	geometry_msgs::Pose pose = grid_mapper.getPoseMsg();
 	position_pub.publish(pose);
-	//Tf orientation visualisation.
-	static tf::TransformBroadcaster br;
-	tf::Transform transform;
-	transform.setOrigin(tf::Vector3(0,0,0));
-	transform.setRotation(tf::Quaternion(pose.orientation.x, pose.orientation.y, 
-										 pose.orientation.z, pose.orientation.w));
-	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "erod"));
 	//Update cone visualisation.
     // image_handler.showCones(grid_mapper.getConeMap(), grid_mapper.getPose());
 	//Clear vectors.
@@ -115,33 +109,32 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg){
     image_handler.setImgPtr(cv_ptr);
 }
 
-void rovioCallback(const nav_msgs::Odometry::ConstPtr& msg){
-	//Get rovio pose.
-	Pose rovio_pose;
+void orbCallback(const nav_msgs::Odometry::ConstPtr& msg){
+	//Get orb pose.
+	Pose orb_pose;
 	geometry_msgs::Pose temp = msg->pose.pose;
 	Eigen::Vector3d temp_position = Eigen::Vector3d(temp.position.x, temp.position.y, temp.position.z);
 	Eigen::Vector4d temp_orientation = Eigen::Vector4d(temp.orientation.x, temp.orientation.y, 
 											 		   temp.orientation.z, temp.orientation.w);
 	//Transfrom orientation.
-	Eigen::Vector4d init_quat(-0.7808,-0.021,0.0002,-0.6244);
+	Eigen::Vector4d init_quat(-0.01668, 0.778, -0.62782, 0.003157);
 	Eigen::Vector4d init_quat_soll(0,0,0,1);	
 	Eigen::Vector4d quat_init_trafo = quat::diffQuaternion(init_quat, init_quat_soll);
-  	rovio_pose.orientation = quat::diffQuaternion(quat_init_trafo, temp_orientation);
+  	orb_pose.orientation = quat::diffQuaternion(quat_init_trafo, temp_orientation);
   	//Transform position.
-  	temp_position = Eigen::Vector3d(-temp_position(1), temp_position(0), temp_position(2));
-  	temp_position(0) *= cos(11.0/180.0*M_PI);
-  	temp_position(1) *= sin(11.0/180.0*M_PI);
- 	Eigen::Vector3d trans_vi_laser(-2.3,0,0);
-	temp_position += trans_vi_laser;
-	rovio_pose.position = transforms::to2D(temp_position);
+  	Eigen::Vector2d trans_vi_laser(0,-2.3);
+  	Eigen::Vector2d trans_vi_global = orb_pose.localToGlobal(trans_vi_laser);
+	Eigen::Vector2d position_rotated =  transforms::to2D(temp_position) + trans_vi_global;  
+	orb_pose.position = Eigen::Vector2d(-position_rotated(1), position_rotated(0));	
   	//Set pose.
-  	grid_mapper.setPose(rovio_pose);
-  	//Orientation check.
-  	Eigen::Vector3d euler = rovio_pose.euler()*180/M_PI;
-  	std::cout << "------------------------------------------------------" << std::endl;
-  	std::cout << "Angle: " << euler(0) << " " << euler(1) << " " << euler(2) << std::endl;
-  	std::cout << "Quat: " << rovio_pose.orientation(0) <<  " " << rovio_pose.orientation(1) <<  " " 
-  						  << rovio_pose.orientation(2) <<  " " << rovio_pose.orientation(3) <<  std::endl;
+  	grid_mapper.setPose(orb_pose);
+  	//Tf orientation visualisation.
+	static tf::TransformBroadcaster br;
+	tf::Transform transform;
+	transform.setOrigin(tf::Vector3(0,0,0));
+	transform.setRotation(tf::Quaternion(orb_pose.orientation(0), orb_pose.orientation(1), 
+										 orb_pose.orientation(2), orb_pose.orientation(3)));
+	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "erod"));
 }
 
 void publishCandidates(std::vector <Candidate> xyz_index_vector,
