@@ -25,6 +25,7 @@ public:
 	void updateWholePath();
 	void updateEndPath();
 	std::vector<Eigen::Vector2d> PathPlanner(Eigen::Vector2d position_cone_1, Eigen::Vector2d position_cone_2, int index_position_cone_1);
+	std::vector<Eigen::Vector2d> startPath(Eigen::Vector2d position_cone_2, double angle, double length);
 	double LocalLengthXAxis(Eigen::Vector2d position_cone_1, Eigen::Vector2d position_cone_2);
 	std::vector<Eigen::Vector2d> CosinePlanner(double length, Eigen::Vector2d position_cone_1, int index_position_cone_1);
 	std::vector<Eigen::Vector2d> GlobalControlPoints(std::vector<Eigen::Vector2d> local_points, double angle, Eigen::Vector2d position_cone_1);
