@@ -29,7 +29,7 @@ datasets = rospy.get_param('/neural_net/datasets')
 datasets_test = rospy.get_param('/neural_net/datasets_test')
 
 #Data Handler.
-data = DataHandler(image_height,image_width,batch_size,test_iterations, 
+data = DataHandler(image_height,image_width,
                    path_to_directory, path_to_model, datasets, datasets_test)
 # tf Graph placeholder.
 input_placeholder = tf.placeholder(tf.float32, [None, image_height, image_width, 3])
@@ -57,17 +57,17 @@ saver = tf.train.Saver()
 start_time = time.time()
 for i in range(training_iters):
     #Get a batch of training examples.
-    x_batch, y_batch = data.getBatch()
+    x_batch, y_batch = data.getBatch(batch_size)
     #Optimizing net according to batch.
     feed_dict_train = {input_placeholder: x_batch,
                        output_placeholder: y_batch}
     session.run(optimizer, feed_dict=feed_dict_train)
     #Calculate the accuracy status.
     if i % display_step == 0:
-        x_training_test, y_training_test = data.getTrainingTestBatch()
+        x_training_test, y_training_test = data.getTrainingTestBatch(test_iterations)
         feed_dict_training_test = {input_placeholder: x_training_test,
                                    output_placeholder: y_training_test}
-        x_test, y_test = data.getTestBatch()
+        x_test, y_test = data.getTestBatch(test_iterations)
         feed_dict_test = {input_placeholder: x_test,
                           output_placeholder: y_test}
         loss_batch, acc_batch = session.run([cost, accuracy], feed_dict=feed_dict_train)
@@ -81,10 +81,10 @@ end_time = time.time()
 time_dif = end_time - start_time
 print("Time usage: " + str(time_dif))
 #Testing accuracy on training data set.
-x_training_test, y_training_test = data.getTrainingTestBatch()
+x_training_test, y_training_test = data.getTrainingTestBatch(test_iterations)
 feed_dict_training_test = {input_placeholder: x_training_test,
                            output_placeholder: y_training_test}
-x_test, y_test = data.getTestBatch()
+x_test, y_test = data.getTestBatch(test_iterations)
 feed_dict_test = {input_placeholder: x_test,
                   output_placeholder: y_test}
 acc_training = session.run(accuracy, feed_dict=feed_dict_training_test)

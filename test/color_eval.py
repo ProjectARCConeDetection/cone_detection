@@ -31,7 +31,7 @@ class ColorEvaluator:
 	def __init__(self):
 		#Init publisher and subscriber.
 		rospy.Subscriber('/candidates', Label, self.labeling, queue_size=10)
-		self.cones_pub = rospy.Publisher('/cones', Label, queue_size=10)
+		self.cones_pub = rospy.Publisher('/cones_color', Label, queue_size=10)
 		#Init cone counter.
 		self.cone_counter = 0
 		print("Eval initialised !")

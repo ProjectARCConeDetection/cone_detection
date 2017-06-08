@@ -38,7 +38,7 @@ detection/searching_resolution: 0.1 #Grid resolution.
 detection/searching_width: 3 #y-Range for searching.
 detection/intensity_threshold: 100 #Minimal intensity of detected objects.
 #Neural Net.
-neural_net/datasets: ['biberist_20_4', 'hoengg_18_05']
+neural_net/datasets: ['biberist_20_4']
 neural_net/datasets_test: ['hoengg_18_05']
 #Paths.
 candidate_path: '/home/sele/cones/candidates/' #Path to candidate images.
