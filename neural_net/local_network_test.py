@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 from net import *
 
-import os
-import numpy as np
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
+import os
+import numpy as np
+from PIL import Image
 import tensorflow as tf
 from skimage import color
-from PIL import Image
+import time
 
 import rospy
 from cone_detection.msg import Label
@@ -17,7 +18,7 @@ rospy.init_node('local_network_test')
 #Net parameters.
 image_width = 50
 image_height = 60
-path_to_candidate = '/home/sele/cones/candidates/'
+path_to_candidate = '/home/sele/cones/candidates/candidates/'
 path_to_model = '/home/sele/cones/models/'
 datasets = ['biberist_20_4']
 #Init and saver variable.
@@ -40,18 +41,41 @@ class NeuralNet:
         self.session.run(tf.global_variables_initializer())
         saver = tf.train.Saver()
         saver.restore(self.session, path_to_model + getModelName(datasets) +" .cpkt")
-        #Init cone counter.
-        self.cone_counter = 0
-        for i in range(0,1500):
-            path = path_to_candidate + "candidates/" + str(i) + ".jpg"
+        #Init cone list.
+        image_list = []
+        # Start timer.
+        start_time = time.time()
+        # Labeling.
+        for i in range(0,300):
+            path = path_to_candidate +  str(i) + ".jpg"
             try:
                 img = Image.open(path)
             except:
                 continue
             arr = np.array(img.getdata(),np.uint8)        
             arr = arr.reshape(image_height, image_width, 3)
-            self.labeling(arr, i)
-
+            image_list.append(self.labeling(arr, i))
+        # Stop timer.
+        end_time = time.time()
+        time_difference = end_time - start_time
+        print("Labeling time usage: " + str(time_difference) + " s")
+        # Getting labels.
+        labeled_list = []
+        reader = csv.reader(open(path_to_candidate + "labeling.csv"))
+        for row in reader:
+            image = int(row[0])
+            label = int(row[1])
+            labeled_list.append([image, label])
+        # Accuracy by comparing lists.
+        correct = 0.0;
+        for element in image_list:
+            index = element[0]
+            for labeled_element in labeled_list:
+                if(index == labeled_element[0] and element[1] = labeled_element[1]):
+                    correct += 1.0
+                    break
+        accuracy = correct / (len(labeled_list) - 1)
+        print("Labeling accuracy: " + str(accuracy))
 
     def labeling(self,msg, index):
         #Get image.
@@ -60,8 +84,10 @@ class NeuralNet:
         # Labeling.
         label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image})
         if(label == [0]):
-            self.cone_counter += 1
             cv2.imwrite(path_to_candidate + "cones/" + str(index) + ".jpg", msg)
+            return [index, 1]
+        else:
+            return [index, 0]
 #------------------------------------------------------------------------
 
 if __name__ == '__main__':
