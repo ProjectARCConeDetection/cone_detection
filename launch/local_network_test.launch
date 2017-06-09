@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>	
+	
+<launch>
+
+  <rosparam command="load" file="$(find cone_detection)/cfg/parameter.yaml" />
+
+  <!-- Local test -->
+  <node name="local_network_test" pkg="cone_detection" type="local_network_test.py" output="screen" required="true" />
+
+</launch>
+

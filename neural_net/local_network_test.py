@@ -16,11 +16,11 @@ from cone_detection.msg import Label
 #Init ros.
 rospy.init_node('local_network_test')
 #Net parameters.
-image_width = 50
-image_height = 60
-path_to_candidate = '/home/sele/cones/candidates/candidates/'
-path_to_model = '/home/sele/cones/models/'
-datasets = ['biberist_20_4']
+image_width = rospy.get_param('/cone/width_pixel')
+image_height = rospy.get_param('/cone/height_pixel')
+path_to_candidate = rospy.get_param('/candidate_path')
+path_to_model = rospy.get_param('/model_path')
+datasets = rospy.get_param('/neural_net/datasets')
 #Init and saver variable.
 input_placeholder = tf.placeholder(tf.float32, [None, image_height, image_width, 3])
 output_placeholder = tf.placeholder(tf.float32, [None, 2])

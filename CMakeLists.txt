@@ -21,6 +21,7 @@ cs_add_library(${PROJECT_NAME}
 	src/image_handler.cpp
     src/laser_detection.cpp
     src/tools.cpp
+    planning/car_model.cpp
     planning/pure_pursuit.cpp
     planning/tools.cpp
     planning/planner.cpp
@@ -31,6 +32,9 @@ target_link_libraries(cone_detector ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 cs_add_executable(path_planner planning/main.cpp)
 target_link_libraries(path_planner ${catkin_LIBRARIES} ${PROJECT_NAME})
+
+cs_add_executable(interface planning/interface.cpp)
+target_link_libraries(interface ${catkin_LIBRARIES} ${PROJECT_NAME})
 
 cs_install()
 cs_export()
