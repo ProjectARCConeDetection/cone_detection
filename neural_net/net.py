@@ -40,7 +40,7 @@ def conv_net(input_image, eps_regularization):
                                                activation_fn = tf.nn.relu)
     return output
     
- def conv_net_parallel(input_image, eps_regularization): 
+def conv_net_parallel(input_image, eps_regularization): 
 
     conv1 = tf.contrib.layers.conv2d(inputs = input_image, 
                                     num_outputs = 32, 

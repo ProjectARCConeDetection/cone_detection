@@ -80,7 +80,7 @@ class DataHandler:
     def ImageFromPath(self, path):
         img = Image.open(path)
         arr = np.array(img.getdata(),np.uint8)
-        arr = arr.reshape(self.image_height, self.image_width, 3)2
+        arr = arr.reshape(self.image_height, self.image_width, 3)
         return arr
 
     def Labels(self, path, dataset):
