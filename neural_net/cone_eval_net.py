@@ -33,9 +33,10 @@ def convertMsgToArray(image):
 	bridge = CvBridge()
 	try:
 		image_array = bridge.imgmsg_to_cv2(image, "bgr8")
+        img_arr = numpy.asarray(image_array)
 	except CvBridgeError as error:
 		print(error)
-	return image_array
+	return img_arr
 
 def deleteFolderContent(path):
 	for element in os.listdir(path):
@@ -60,8 +61,8 @@ class NeuralNet:
 		image[0][:][:][:] =  color.rgb2lab(convertMsgToArray(msg.image)) / 255.0
 		# Labeling.
 		label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image})
-		# if(label == [0]):
-		if(True):
+		if(label == [0]):
+		#if(True):
 			msg.label = True
 			self.cone_counter += 1
 			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg", convertMsgToArray(msg.image))

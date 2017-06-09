@@ -31,7 +31,7 @@ bool ok=true;
 cv::namedWindow( "Display", cv::WINDOW_AUTOSIZE );
 
 std::ofstream file;
-file.open("/home/nico/candidates/Biberist20_4/labels.csv");
+file.open("/home/nico/cones/candidates/validation_test1/labels.csv");
 
 cv::Mat img;
 cv::Mat dst;
@@ -42,7 +42,7 @@ refresh();
 while(ok) {
 	std::stringstream ss;
     ss << index;
-    path = "/home/nico/candidates/Biberist20_4/" + ss.str() + ".jpg";
+    path = "/home/nico/cones/candidates/validation_test1/" + ss.str() + ".jpg";
     cv::Size size(800,1200);
     img = cv::imread(path);
     if(img.data) {
