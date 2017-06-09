@@ -12,14 +12,11 @@ import tensorflow as tf
 from skimage import color
 
 class DataHandler:
-    def __init__(self, image_height, image_width, batch_size, test_size, 
+    def __init__(self, image_height, image_width,  
                 path_candidates, path_model, datasets, datasets_test):
         #Define image and batch parameter.
         self.image_height = image_height
         self.image_width = image_width
-        self.batch_size = batch_size
-        #Set test size.
-        self.test_size = test_size
         #Set paths and define dataset.
         self.path_candidates = path_candidates
         self.path_model = path_model
@@ -38,34 +35,34 @@ class DataHandler:
         self.figure_name = self.path_model + getModelName(datasets) + '.png'
         self.description = self.Description(datasets, datasets_test)
 
-    def getBatch(self):
+    def getBatch(self, batch_size):
         length = len(self.train_X)-1
-        batch_x = np.zeros((self.batch_size,self.image_height,self.image_width,3))
-        batch_y = np.zeros((self.batch_size,2))
+        batch_x = np.zeros((batch_size,self.image_height,self.image_width,3))
+        batch_y = np.zeros((batch_size,2))
         #Get training batch.
-        for index in range(0,self.batch_size-1):
+        for index in range(0,batch_size-1):
             batch_x[index][:][:][:] = color.rgb2lab(self.train_X[self.batch_counter + index]) / 255.0
             batch_y[index][:] = self.train_Y[self.batch_counter + index]
         #Update batch_counter.
-        self.batch_counter += self.batch_size
-        if(self.batch_counter + self.batch_size >= length): self.batch_counter = 0
+        self.batch_counter += batch_size
+        if(self.batch_counter + batch_size >= length): self.batch_counter = 0
         return batch_x,batch_y
 
-    def getTestBatch(self):
-        test_x = np.zeros((self.test_size,self.image_height,self.image_width,3))
-        test_y = np.zeros((self.test_size,2))
+    def getTestBatch(self, test_size):
+        test_x = np.zeros((test_size,self.image_height,self.image_width,3))
+        test_y = np.zeros((test_size,2))
         #Get test batch.
-        for index in range(0,self.test_size):
+        for index in range(0,test_size):
             random_int = randint(0,len(self.test_X)-1)
             test_x[index][:][:][:] = color.rgb2lab(self.test_X[random_int]) / 255.0
             test_y[index][:] = self.test_Y[random_int]
         return test_x, test_y
 
-    def getTrainingTestBatch(self):
-        test_x = np.zeros((self.test_size,self.image_height,self.image_width,3))
-        test_y = np.zeros((self.test_size,2))
+    def getTrainingTestBatch(self, test_size):
+        test_x = np.zeros((test_size,self.image_height,self.image_width,3))
+        test_y = np.zeros((test_size,2))
         #Get test batch.
-        for index in range(0,self.test_size):
+        for index in range(0,test_size):
             random_int = randint(0,len(self.train_X)-1)
             test_x[index][:][:][:] = color.rgb2lab(self.train_X[random_int]) / 255.0
             test_y[index][:] = self.train_Y[random_int]
@@ -83,7 +80,7 @@ class DataHandler:
     def ImageFromPath(self, path):
         img = Image.open(path)
         arr = np.array(img.getdata(),np.uint8)
-        arr = arr.reshape(self.image_height, self.image_width, 3)
+        arr = arr.reshape(self.image_height, self.image_width, 3)2
         return arr
 
     def Labels(self, path, dataset):

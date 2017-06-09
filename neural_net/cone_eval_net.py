@@ -5,7 +5,7 @@ import os
 import numpy as np
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
-#import tensorflow as tf
+import tensorflow as tf
 from skimage import color
 
 import rospy
@@ -36,7 +36,11 @@ def convertMsgToArray(image):
         img_arr = numpy.asarray(image_array)
 	except CvBridgeError as error:
 		print(error)
+<<<<<<< HEAD
 	return img_arr
+=======
+	return np.asarray(image_array)
+>>>>>>> 1dcb1750943ce46ae3d683cff25640fb96e826c8
 
 def deleteFolderContent(path):
 	for element in os.listdir(path):
@@ -62,10 +66,13 @@ class NeuralNet:
 		# Labeling.
 		label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image})
 		if(label == [0]):
+<<<<<<< HEAD
 		#if(True):
+=======
+>>>>>>> 1dcb1750943ce46ae3d683cff25640fb96e826c8
 			msg.label = True
 			self.cone_counter += 1
-			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg", convertMsgToArray(msg.image))
+			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg",convertMsgToArray(msg.image))
 			self.cones_pub.publish(msg)
 #------------------------------------------------------------------------
 
