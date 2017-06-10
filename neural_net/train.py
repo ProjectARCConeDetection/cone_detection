@@ -38,7 +38,7 @@ input_placeholder_flat = tf.contrib.layers.flatten(input_placeholder)
 y_true = tf.argmax(output_placeholder, dimension=1)
 
 # Construct model.
-output_layer = conv_net_parallel(input_placeholder, eps_regularization)
+output_layer = fully_connected(input_placeholder_flat, eps_regularization)
 y_pred = tf.argmax(tf.nn.softmax(output_layer), dimension=1)
 #Cost and optimizer.
 cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=output_layer,labels=output_placeholder)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from net import *
 
+import csv
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import os
@@ -21,6 +22,7 @@ image_height = rospy.get_param('/cone/height_pixel')
 path_to_candidate = rospy.get_param('/candidate_path')
 path_to_model = rospy.get_param('/model_path')
 datasets = rospy.get_param('/neural_net/datasets')
+datasets_validation = rospy.get_param('/neural_net/datasets_validation')
 #Init and saver variable.
 input_placeholder = tf.placeholder(tf.float32, [None, image_height, image_width, 3])
 output_placeholder = tf.placeholder(tf.float32, [None, 2])
@@ -40,28 +42,29 @@ class NeuralNet:
         self.session = tf.Session()
         self.session.run(tf.global_variables_initializer())
         saver = tf.train.Saver()
-        saver.restore(self.session, path_to_model + getModelName(datasets) +" .cpkt")
+        saver.restore(self.session, path_to_model + getModelName(datasets) + " .cpkt")
         #Init cone list.
         image_list = []
         # Start timer.
         start_time = time.time()
         # Labeling.
-        for i in range(0,300):
-            path = path_to_candidate +  str(i) + ".jpg"
+        for i in range(0,1000):
+            path = path_to_candidate + datasets_validation + "/" + str(i) + ".jpg"
             try:
                 img = Image.open(path)
+                arr = np.array(img.getdata(),np.uint8)        
+                arr = arr.reshape(image_height, image_width, 3)
+                image_list.append(self.labeling(arr, i))
+                cv2.imwrite(path_to_candidate + "candidates/" + str(i) + ".jpg", arr)
             except:
                 continue
-            arr = np.array(img.getdata(),np.uint8)        
-            arr = arr.reshape(image_height, image_width, 3)
-            image_list.append(self.labeling(arr, i))
         # Stop timer.
         end_time = time.time()
         time_difference = end_time - start_time
         print("Labeling time usage: " + str(time_difference) + " s")
         # Getting labels.
         labeled_list = []
-        reader = csv.reader(open(path_to_candidate + "labeling.csv"))
+        reader = csv.reader(open(path_to_candidate + datasets_validation + "/" + "labeling.csv"))
         for row in reader:
             image = int(row[0])
             label = int(row[1])
@@ -71,7 +74,7 @@ class NeuralNet:
         for element in image_list:
             index = element[0]
             for labeled_element in labeled_list:
-                if(index == labeled_element[0] and element[1] = labeled_element[1]):
+                if(index == labeled_element[0] and element[1] == labeled_element[1]):
                     correct += 1.0
                     break
         accuracy = correct / (len(labeled_list) - 1)
@@ -92,6 +95,7 @@ class NeuralNet:
 
 if __name__ == '__main__':
     #Delete files in candidates and cones order.
+    deleteFolderContent(path_to_candidate + "candidates/")
     deleteFolderContent(path_to_candidate + "cones/")
     #Init neural net.
     neural_net = NeuralNet()
