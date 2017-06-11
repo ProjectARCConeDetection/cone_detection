@@ -1,3 +1,4 @@
+#include <cone_detection/car_model.hpp>
 #include <cone_detection/grid_mapper.hpp>
 #include <cone_detection/image_handler.hpp>
 #include <cone_detection/laser_detection.hpp>
@@ -7,18 +8,27 @@
 #include <cone_detection/Label.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/Odometry.h>
+#include <sensor_msgs/Imu.h>
+#include <std_msgs/Float64.h>
 #include <tf/transform_broadcaster.h>
 
 //Publisher.
 ros::Publisher candidates_pub;
+ros::Publisher car_model_pub;
+ros::Publisher car_model_pose;
 ros::Publisher cone_grid_pub;
 ros::Publisher labeled_cloud_pub;
 ros::Publisher position_pub;
 ros::Subscriber cloud_sub;
-ros::Subscriber raw_image_sub;
 ros::Subscriber cones_sub;
+ros::Subscriber imu_time_sub;
 ros::Subscriber orb_sub;
+ros::Subscriber raw_image_sub;
+ros::Subscriber steering_sub;
+ros::Subscriber wheel_left_sub;
+ros::Subscriber wheel_right_sub;
 //Init classes.
+CarModel car_model;
 LaserDetection cone_detector;
 ImageHandler image_handler;
 GridMapper grid_mapper;
@@ -27,7 +37,11 @@ int counter=0;
 void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
 void conesCallback(const cone_detection::Label::ConstPtr& msg);
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg);
+void imuTimeCallback(const sensor_msgs::Imu::ConstPtr& msg);
 void orbCallback(const nav_msgs::Odometry::ConstPtr& msg);
+void steeringCallback(const std_msgs::Float64::ConstPtr& msg);
+void wheelLeftCallback(const std_msgs::Float64::ConstPtr& msg);
+void wheelRightCallback(const std_msgs::Float64::ConstPtr& msg);
 void publishCandidates(std::vector <Candidate> xyz_index_vector,
 					   std::vector<cv::Mat> candidates, std::vector<int> candidate_indizes);
 void gettingParameter(ros::NodeHandle* node, std::string* candidate_path,
@@ -41,18 +55,23 @@ int main(int argc, char** argv){
 	Cone cone; Detection detection; Erod erod;
 	gettingParameter(&node,&candidate_path,&cone,&detection,&erod);
 	//Init classes.
+	car_model.init(erod);
 	grid_mapper.init(detection);
 	image_handler.init(candidate_path, cone, detection);
 	cone_detector.init(cone, detection, erod);
 	//Init pubs & subs.
+	car_model_pub = node.advertise<geometry_msgs::TwistStamped>("/car_model_velocity", 1);
 	candidates_pub = node.advertise<cone_detection::Label>("/candidates", 10);
 	cone_grid_pub = node.advertise<nav_msgs::OccupancyGrid>("/cones_grid", 10);
 	labeled_cloud_pub = node.advertise<sensor_msgs::PointCloud2>("/labeled_points", 10);
 	position_pub = node.advertise<geometry_msgs::Pose>("/car_pose", 10);
 	cloud_sub = node.subscribe("/velodyne_points", 10, cloudCallback);
+	imu_time_sub = node.subscribe("/imu0", 1, imuTimeCallback);
 	raw_image_sub = node.subscribe("/usb_cam/image_raw", 10, imageCallback);
 	cones_sub = node.subscribe("/cones", 10, conesCallback);
-	// orb_sub = node.subscribe("/orb/odometry", 10, orbCallback);
+	steering_sub = node.subscribe("/state_steering_angle", 1, steeringCallback);
+	wheel_left_sub = node.subscribe("/wheel_rear_left", 1, wheelLeftCallback);
+	wheel_right_sub = node.subscribe("/wheel_rear_right", 1, wheelRightCallback);
 	orb_sub = node.subscribe("/orb_slam2/odometry", 10, orbCallback);
   	//Spinning.
   	ros::Rate rate(10);
@@ -109,6 +128,10 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg){
     image_handler.setImgPtr(cv_ptr);
 }
 
+void imuTimeCallback(const sensor_msgs::Imu::ConstPtr& msg){
+  	car_model.setTimeStamp(msg->header.stamp);
+}
+
 void orbCallback(const nav_msgs::Odometry::ConstPtr& msg){
 	//Get orb pose.
 	Pose orb_pose;
@@ -135,6 +158,19 @@ void orbCallback(const nav_msgs::Odometry::ConstPtr& msg){
 	transform.setRotation(tf::Quaternion(orb_pose.orientation(0), orb_pose.orientation(1), 
 										 orb_pose.orientation(2), orb_pose.orientation(3)));
 	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "erod"));
+}
+
+void steeringCallback(const std_msgs::Float64::ConstPtr& msg){
+	car_model.setSteeringAngle(msg->data);
+	//Velocity and Pose update.
+  	car_model_pub.publish(car_model.getTwistMsg());
+}
+
+void wheelLeftCallback(const std_msgs::Float64::ConstPtr& msg){
+	car_model.setRearLeftWheelVel(msg->data);
+}
+void wheelRightCallback(const std_msgs::Float64::ConstPtr& msg){
+	car_model.setRearRightWheelVel(msg->data);
 }
 
 void publishCandidates(std::vector <Candidate> xyz_index_vector,

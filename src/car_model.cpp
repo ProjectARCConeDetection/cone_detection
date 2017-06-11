@@ -1,4 +1,4 @@
-#include "planning/car_model.hpp"
+#include "cone_detection/car_model.hpp"
 
 CarModel::CarModel(){}
 
@@ -9,6 +9,8 @@ void CarModel::init(Erod erod){
     steering_angle_ = 0.0;
     velocity_left_ = 0.0;
     velocity_right_ = 0.0;
+    //Init position.
+    position_ = Eigen::Vector2d(0,0);
     //Init parameter.
     distance_rear_front_axis_ = erod.distance_wheel_axis;
     width_axis_ = erod.width_wheel_axis; 
@@ -36,6 +38,13 @@ void CarModel::updateModel(){
     tilted_velocity_(0) = local_velocity_(1);
     tilted_velocity_(1) = sin(tilting_angle/180*M_PI)*local_velocity_(0);
     tilted_velocity_(2) = cos(tilting_angle/180*M_PI)*local_velocity_(0); 
+    //Position update.
+    Eigen::Vector2d last_position = position;
+    position_ += time_delta_*local_velocity_;
+    //Orientation update.
+    double delta_x = fabs(position_(0) - last_position(0));
+    double delta_y = fabs(position_(1) - last_position(1))
+    orientation_ = atan2(delta_y/delta_x);
 }
 
 geometry_msgs::TwistStamped CarModel::getTwistMsg(){
@@ -58,4 +67,7 @@ void CarModel::setRearLeftWheelVel(double vel){velocity_left_ = vel;}
 
 void CarModel::setRearRightWheelVel(double vel){velocity_right_ = vel;}
 
-void CarModel::setTimeStamp(ros::Time timestamp){timestamp_ = timestamp;}
+void CarModel::setTimeStamp(ros::Time timestamp){
+    time_delta_ = timestamp_.toSec() - timestamp.toSec();
+    timestamp_ = timestamp;
+}

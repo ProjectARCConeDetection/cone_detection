@@ -1,4 +1,3 @@
-#include <planning/car_model.hpp>
 #include <planning/planner.hpp>
 #include <planning/pure_pursuit.hpp>
 #include <planning/tools.hpp>
@@ -9,26 +8,16 @@
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <nav_msgs/OccupancyGrid.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/Imu.h>
-#include <std_msgs/Bool.h>
-#include <std_msgs/Float64.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <cone_detection/Path.h>
 
 //Publisher.& Subscriber.
-ros::Publisher car_model_pub;
-ros::Publisher car_model_pose;
 ros::Publisher controls_pub;
 ros::Publisher path_pub;
+ros::Subscriber car_model_velocity_sub;
 ros::Subscriber gridmap_sub;
-ros::Subscriber imu_time_sub;
 ros::Subscriber pose_sub;
-ros::Subscriber steering_sub;
-ros::Subscriber wheel_left_sub;
-ros::Subscriber wheel_right_sub;
 //Init classes.
-CarModel car_model;
 PurePursuit pure_pursuit;
 Planner planner;
 //Parameter.
@@ -36,12 +25,9 @@ Control control;
 Erod erod;
 Planning planning;
 //Decleration of functions.
+void carModelVelocityCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
 void gridmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& grid);
-void imuTimeCallback(const sensor_msgs::Imu::ConstPtr& msg);
 void poseCallback(const geometry_msgs::Pose::ConstPtr& msg);
-void steeringCallback(const std_msgs::Float64::ConstPtr& msg);
-void wheelLeftCallback(const std_msgs::Float64::ConstPtr& msg);
-void wheelRightCallback(const std_msgs::Float64::ConstPtr& msg);
 void gettingParameter(ros::NodeHandle* node, Control* control, Erod* erod, Planning* planning);
 
 int main(int argc, char** argv){
@@ -50,30 +36,28 @@ int main(int argc, char** argv){
 	//Getting parameter.
 	gettingParameter(&node,&control,&erod,&planning);
 	//Init classes.
-	car_model.init(erod);
 	pure_pursuit.init(control,erod);
 	planner.init(planning);
 	//Init pubs & subs.
-	car_model_pub = node.advertise<geometry_msgs::TwistStamped>("/car_model_velocity", 1);
 	controls_pub = node.advertise<std_msgs::Float32MultiArray>("/stellgroessen", 1);
 	path_pub = node.advertise<std_msgs::Float32MultiArray>("/path", 10);
+	car_model_velocity_sub = node.subscribe("/car_model_velocity", 1, carModelVelocityCallback);
 	gridmap_sub = node.subscribe("/cones_grid", 1, gridmapCallback);
-	imu_time_sub = node.subscribe("/imu0", 1, imuTimeCallback);
 	pose_sub = node.subscribe("/car_pose", 1, poseCallback);
-	steering_sub = node.subscribe("/state_steering_angle", 1, steeringCallback);
-	wheel_left_sub = node.subscribe("/wheel_rear_left", 1, wheelLeftCallback);
-	wheel_right_sub = node.subscribe("/wheel_rear_right", 1, wheelRightCallback);
   	//Spinning.
   	ros::Rate rate(10);
   	while(ros::ok()){
   		ros::spinOnce();
-  		//Update and publish car model.
-  		car_model_pub.publish(car_model.getTwistMsg());
-  		//Pure pursuit update.
-		pure_pursuit.setVelocity(car_model.getVelocity().norm());
 		rate.sleep();
   	}
 	return 0;
+}
+
+void carModelVelocityCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
+	//Get speed.
+	double speed = sqrt(msg->twist.linear.x*msg->twist.linear.x + msg->twist.linear.y*msg->twist.linear.y);
+	//Pure pursuit update.
+	pure_pursuit.setVelocity(speed);
 }
 
 void gridmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& grid){
@@ -91,27 +75,12 @@ void gridmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& grid){
 	}	
 }
 
-void imuTimeCallback(const sensor_msgs::Imu::ConstPtr& msg){
-  	car_model.setTimeStamp(msg->header.stamp);
-}
-
 void poseCallback(const geometry_msgs::Pose::ConstPtr& msg){
 	Pose pose;
 	pose.position = Eigen::Vector2d(msg->position.x, msg->position.y);
 	pose.orientation = Eigen::Vector4d(msg->orientation.x, msg->orientation.y, 
 									   msg->orientation.z, msg->orientation.w);
 	pure_pursuit.setPose(pose);
-}
-
-void steeringCallback(const std_msgs::Float64::ConstPtr& msg){
-	car_model.setSteeringAngle(msg->data);
-}
-
-void wheelLeftCallback(const std_msgs::Float64::ConstPtr& msg){
-	car_model.setRearLeftWheelVel(msg->data);
-}
-void wheelRightCallback(const std_msgs::Float64::ConstPtr& msg){
-	car_model.setRearRightWheelVel(msg->data);
 }
 
 void gettingParameter(ros::NodeHandle* node, Control* control, Erod* erod, Planning* planning){

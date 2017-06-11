@@ -17,11 +17,11 @@ find_package(catkin_simple 0.1.0 REQUIRED COMPONENTS
 catkin_simple(ALL_DEPS_REQUIRED)
 
 cs_add_library(${PROJECT_NAME}
-	src/grid_mapper.cpp 
-	src/image_handler.cpp
+	  src/grid_mapper.cpp 
+	  src/image_handler.cpp
     src/laser_detection.cpp
     src/tools.cpp
-    planning/car_model.cpp
+    src/car_model.cpp
     planning/pure_pursuit.cpp
     planning/tools.cpp
     planning/planner.cpp

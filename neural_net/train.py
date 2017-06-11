@@ -13,7 +13,7 @@ import time
 
 # Training parameter.
 learning_rate = 0.0001
-eps_regularization = 0.01
+eps_regularization = 0.1
 batch_size = 64
 training_iters = 2000
 test_iterations = 64
