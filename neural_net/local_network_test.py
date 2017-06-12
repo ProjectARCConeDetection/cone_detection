@@ -24,11 +24,12 @@ path_to_model = rospy.get_param('/model_path')
 datasets = rospy.get_param('/neural_net/datasets')
 datasets_validation = rospy.get_param('/neural_net/datasets_validation')
 #Init and saver variable.
+keep_prob = tf.placeholder(tf.float32)
 input_placeholder = tf.placeholder(tf.float32, [None, image_height, image_width, 3])
 output_placeholder = tf.placeholder(tf.float32, [None, 2])
 input_placeholder_flat = tf.contrib.layers.flatten(input_placeholder)
 y_true = tf.argmax(output_placeholder, dimension=1)
-output_layer = fully_connected(input_placeholder_flat, 0.01)
+output_layer = fully_connected(input_placeholder_flat, 0.01, keep_prob)
 y_pred = tf.argmax(tf.nn.softmax(output_layer), dimension=1)
 
 
@@ -80,12 +81,12 @@ class NeuralNet:
         accuracy = correct / (len(labeled_list) - 1)
         print("Labeling accuracy: " + str(accuracy))
 
-    def labeling(self,msg, index):
+    def labeling(self,msg,index):
         #Get image.
         image = np.zeros((1,image_height, image_width,3))
         image[0][:][:][:] =  color.rgb2lab(msg) / 255.0
         # Labeling.
-        label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image})
+        label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image, keep_prob: 1.0})
         if(label == [0]):
             cv2.imwrite(path_to_candidate + "cones/" + str(index) + ".jpg", msg)
             return [index, 1]

@@ -14,6 +14,7 @@ import time
 # Training parameter.
 learning_rate = 0.0001
 eps_regularization = 0.1
+dropout = 0.95
 batch_size = 64
 training_iters = 2000
 test_iterations = 64
@@ -32,13 +33,14 @@ datasets_test = rospy.get_param('/neural_net/datasets_test')
 data = DataHandler(image_height,image_width,
                    path_to_directory, path_to_model, datasets, datasets_test)
 # tf Graph placeholder.
+keep_prob = tf.placeholder(tf.float32)
 input_placeholder = tf.placeholder(tf.float32, [None, image_height, image_width, 3])
 output_placeholder = tf.placeholder(tf.float32, [None, 2])
 input_placeholder_flat = tf.contrib.layers.flatten(input_placeholder)
 y_true = tf.argmax(output_placeholder, dimension=1)
 
 # Construct model.
-output_layer = fully_connected(input_placeholder_flat, eps_regularization)
+output_layer = fully_connected(input_placeholder_flat, eps_regularization, keep_prob)
 y_pred = tf.argmax(tf.nn.softmax(output_layer), dimension=1)
 #Cost and optimizer.
 cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=output_layer,labels=output_placeholder)
@@ -60,16 +62,19 @@ for i in range(training_iters):
     x_batch, y_batch = data.getBatch(batch_size)
     #Optimizing net according to batch.
     feed_dict_train = {input_placeholder: x_batch,
-                       output_placeholder: y_batch}
+                       output_placeholder: y_batch, 
+                       keep_prob: dropout}
     session.run(optimizer, feed_dict=feed_dict_train)
     #Calculate the accuracy status.
     if i % display_step == 0:
         x_training_test, y_training_test = data.getTrainingTestBatch(test_iterations)
         feed_dict_training_test = {input_placeholder: x_training_test,
-                                   output_placeholder: y_training_test}
+                                   output_placeholder: y_training_test, 
+                                   keep_prob: 1.0}
         x_test, y_test = data.getTestBatch(test_iterations)
         feed_dict_test = {input_placeholder: x_test,
-                          output_placeholder: y_test}
+                          output_placeholder: y_test, 
+                          keep_prob: 1.0}
         loss_batch, acc_batch = session.run([cost, accuracy], feed_dict=feed_dict_train)
         acc_training = session.run(accuracy, feed_dict=feed_dict_training_test)
         acc_test = session.run(accuracy, feed_dict=feed_dict_test)
@@ -83,10 +88,12 @@ print("Time usage: " + str(time_dif))
 #Testing accuracy on training data set.
 x_training_test, y_training_test = data.getTrainingTestBatch(test_iterations)
 feed_dict_training_test = {input_placeholder: x_training_test,
-                           output_placeholder: y_training_test}
+                           output_placeholder: y_training_test, 
+                           keep_prob: 1.0}
 x_test, y_test = data.getTestBatch(test_iterations)
 feed_dict_test = {input_placeholder: x_test,
-                  output_placeholder: y_test}
+                  output_placeholder: y_test, 
+                  keep_prob: 1.0}
 acc_training = session.run(accuracy, feed_dict=feed_dict_training_test)
 acc_test = session.run(accuracy, feed_dict=feed_dict_test)
 print("Accuracy at all on training: %f and test: %f" % (acc_training, acc_test))

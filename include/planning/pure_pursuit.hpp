@@ -32,8 +32,8 @@ private:
 	Erod erod_;
 	//Helper functions.
 	double calculateSteering();
-	double calculateVel();
-	double curveRadius();
+	// double calculateVel();
+	// double curveRadius();
 };
 
 #endif

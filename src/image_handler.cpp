@@ -36,11 +36,8 @@ void ImageHandler::croppCandidates(std::vector <Candidate> xyz_index_vector){
         // Draws the rect in the original image and show it.
         for(int i=0; i<image_points_.size();++i){
             cv::Point point = image_points_[i];
-            // int x_start = point.x;
-            //int y_start = point.y + cone_.height_pixel/2;
-            int x_start = point.x;
+            int x_start = point.x - cone_.width_pixel;
             int y_start = point.y + cone_.height_pixel/2;
-
             if(x_start < cam_.image_width-cone_.width_pixel && x_start > 0 
               && y_start < cam_.image_height-cone_.height_pixel && y_start > 0){ 
                 cv::Mat cropped = croppImage(dst, x_start, y_start);

@@ -12,22 +12,5 @@
   <node name="viewer" pkg="cone_detection" type="viewer.py" output="screen" />
   <node name="path_planner" pkg="cone_detection" type="path_planner" output="screen" args="$(arg VCU)"/>
 
-  <!-- rovio -->
-  <node pkg="rovio" type="rovio_node" name="rovio" output="screen">
-   <param name="filter_config" value="$(find rovio)/cfg/arc_old.info"/>
-   <param name="camera0_config" value="$(find rovio)/cfg/rovio_cam0.yaml"/>
-   <param name="camera1_config" value="$(find rovio)/cfg/rovio_cam1.yaml"/>
-   <param name="use_car_model_as_odom" value="false"/>
-  </node> 
-
-  <!-- RSLAM -->
-  <node pkg="orb_slam2" type="stereo" name="stereo" args="$(find orb_slam2)/../../../Vocabulary/ORBvoc.txt  $(find orb_slam2)/../../Stereo/ARC_old.yaml true false /home/sele/paths/test /home/sele/paths/test" output="screen">
-    <remap from="/camera/left/image_raw" to="/cam0/image_raw"/>
-    <remap from="/camera/right/image_raw" to="/cam1/image_raw"/>
-</node>
-
-  <!-- TF Tree -->
-  <node pkg="tf" type="static_transform_publisher" name="pose_broadcaster" args="0 0 0 0 0 0 1 world pose 100" />
-
 </launch>
 

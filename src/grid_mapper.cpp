@@ -5,9 +5,6 @@ GridMapper::GridMapper(){}
 GridMapper::~GridMapper(){}
 
 void GridMapper::init(Detection detection){
-	//Init pose.
-	pose_.position = Eigen::Vector2d(-2.2,0);
-	pose_.orientation = Eigen::Vector4d(0,0,0,1);
 	//Set grid parameter.
 	detection_ = detection;
 	//Init cone map.
@@ -38,18 +35,6 @@ Eigen::Vector2d GridMapper::convertLocalToGlobal(Candidate cone){
 std::vector< std::vector<int> > GridMapper::getConeMap(){return cone_map_;}
 
 Pose GridMapper::getPose(){return pose_;}
-
-geometry_msgs::Pose GridMapper::getPoseMsg(){
-	geometry_msgs::Pose pose_msg;
-	pose_msg.position.x = pose_.position(0);
-	pose_msg.position.y = pose_.position(1);
-	pose_msg.position.z = 0.0;
-	pose_msg.orientation.x = pose_.orientation(0);
-	pose_msg.orientation.y = pose_.orientation(1);
-	pose_msg.orientation.z = pose_.orientation(2);
-	pose_msg.orientation.w = pose_.orientation(3);
-	return pose_msg;
-}
 
 nav_msgs::OccupancyGrid GridMapper::getOccupancyGridMap(){
 	nav_msgs::OccupancyGrid grid;

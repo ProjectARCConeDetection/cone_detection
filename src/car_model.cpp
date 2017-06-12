@@ -10,7 +10,9 @@ void CarModel::init(Erod erod){
     velocity_left_ = 0.0;
     velocity_right_ = 0.0;
     //Init position.
-    position_ = Eigen::Vector2d(0,0);
+    car_pose_.position = Eigen::Vector2d(0.0,0.0);
+    //Init timestamp.
+    last_update_time_ = ros::Time::now().toSec();
     //Init parameter.
     distance_rear_front_axis_ = erod.distance_wheel_axis;
     width_axis_ = erod.width_wheel_axis; 
@@ -33,30 +35,39 @@ void CarModel::updateModel(){
         local_velocity_(0) = cos(steering_angle_) * v_front;
         local_velocity_(1) = sin (steering_angle_) * v_front;
     }
-    //Rotate due to tilted VI Sensor.
-    float tilting_angle = 11.0;
-    tilted_velocity_(0) = local_velocity_(1);
-    tilted_velocity_(1) = sin(tilting_angle/180*M_PI)*local_velocity_(0);
-    tilted_velocity_(2) = cos(tilting_angle/180*M_PI)*local_velocity_(0); 
+    //Time update.
+    double time_delta = ros::Time::now().toSec() - last_update_time_;
+    last_update_time_ = ros::Time::now().toSec();
     //Position update.
-    Eigen::Vector2d last_position = position;
-    position_ += time_delta_*local_velocity_;
+    Eigen::Vector2d last_position = car_pose_.position;
+    car_pose_.position += time_delta*local_velocity_;
     //Orientation update.
-    double delta_x = fabs(position_(0) - last_position(0));
-    double delta_y = fabs(position_(1) - last_position(1))
-    orientation_ = atan2(delta_y/delta_x);
+    double delta_x = fabs(car_pose_.position(0) - last_position(0));
+    double delta_y = fabs(car_pose_.position(1) - last_position(1));
+    std::cout << "dx: " << delta_x << " and dy: " << delta_y << std::endl; 
+    car_pose_.orientation = atan2(delta_y,delta_x);
+}
+
+geometry_msgs::Pose CarModel::getPoseMsg(){
+    geometry_msgs::Pose pose;
+    pose.position.x = car_pose_.position(0);
+    pose.position.y = car_pose_.position(1);
+    pose.position.z = 0.0;
+    pose.orientation.x = 0.0;
+    pose.orientation.y = 0.0;
+    pose.orientation.z = 0.0;
+    pose.orientation.w = car_pose_.orientation;
+    return pose;
 }
 
 geometry_msgs::TwistStamped CarModel::getTwistMsg(){
     geometry_msgs::TwistStamped twist;
-    twist.header.stamp = timestamp_;
-    twist.twist.linear.x = tilted_velocity_(0);
-    twist.twist.linear.y  = tilted_velocity_(1);
-    twist.twist.linear.z  = tilted_velocity_(2);
+    twist.header.stamp = ros::Time::now();
+    twist.twist.linear.x = local_velocity_(0);
+    twist.twist.linear.y  = local_velocity_(1);
+    twist.twist.linear.z  = 0.0;
     return twist;
 }
-
-Eigen::Vector3d CarModel::getVelocity(){return tilted_velocity_;}
 
 void CarModel::setSteeringAngle(double steering_angle){
     steering_angle_ = steering_angle; 
@@ -66,8 +77,3 @@ void CarModel::setSteeringAngle(double steering_angle){
 void CarModel::setRearLeftWheelVel(double vel){velocity_left_ = vel;}
 
 void CarModel::setRearRightWheelVel(double vel){velocity_right_ = vel;}
-
-void CarModel::setTimeStamp(ros::Time timestamp){
-    time_delta_ = timestamp_.toSec() - timestamp.toSec();
-    timestamp_ = timestamp;
-}
