@@ -51,9 +51,7 @@
     	<arg name="max_range" value="$(arg max_range)"/>
     	<arg name="min_range" value="$(arg min_range)"/>
   </include>
-  
-  <!-- VI -->
-  <node name="visensor_node" pkg="visensor_node" type="visensor_node" output="screen"/>
+
 
 </launch>
 

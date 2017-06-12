@@ -62,11 +62,11 @@ int main(int argc, char** argv){
     if ((sock_=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) printError("socket");
     if(bind(sock_, (struct sockaddr*)&si_me_, sizeof(si_me_)) == -1) printError("binding");
   	//Spinning.
-  	ros::Rate rate(10);
+  	// ros::Rate rate(10);
   	while(ros::ok()){
   		ros::spinOnce();
   		recv_msgs();
-		rate.sleep();
+		// rate.sleep();
   	}
   	//Back to manuell mode.
     send_msg("am", 0.0, true);
@@ -80,8 +80,8 @@ void modeCallback(const std_msgs::Bool::ConstPtr& msg){
 }
 
 void stellgroessenCallback(const std_msgs::Float32MultiArray::ConstPtr& msg){
-	send_msg("vs",msg->data[0], true, control.max_absolute_velocity, -100, 0);
-	send_msg("ss",msg->data[1]*180/M_PI, true, 
+	send_msg("vs",msg->data[1], true, control.max_absolute_velocity, -100, 0);
+	send_msg("ss",msg->data[0]*180/M_PI, true, 
 				  	control.max_steering_angle, -control.max_steering_angle, 0);
 }
 
@@ -98,13 +98,19 @@ void recv_msgs(){
     std::string kind = msg.substr(0,2);
     std::string value_string(msg, 3, msg.length()-1);
     const char *buffer = value_string.c_str();
-    double value = atof(buffer);
+    float value = atof(buffer);
+    std_msgs::Float64 value_msg;
+    value_msg.data = value;
     //Answers.
-    if(kind == "rr") velocity_right_pub.publish(value);
-    else if(kind == "rl") velocity_left_pub.publish(value);
+    if(kind == "rr"){  
+        velocity_right_pub.publish(value_msg);
+
+    }
+    else if(kind == "rl") velocity_left_pub.publish(value_msg);
     else if(kind == "si"){
         value = (value-1000)*M_PI/180.0;
-        steering_angle_pub.publish(value);
+        value_msg.data = value;
+        steering_angle_pub.publish(value_msg);
     }
 }
 

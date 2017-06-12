@@ -33,7 +33,7 @@ y_pred = tf.argmax(tf.nn.softmax(output_layer), dimension=1)
 def convertMsgToArray(image):
 	bridge = CvBridge()
 	try:
-		image_array = bridge.imgmsg_to_cv2(image, "bgr8")
+		image_array = bridge.imgmsg_to_cv2(image, "rgb8")
 	except CvBridgeError as error:
 		print(error)
 	return np.asarray(image_array)
@@ -50,7 +50,7 @@ class NeuralNet:
 		saver = tf.train.Saver()
 		saver.restore(self.session, path_to_model + getModelName(datasets) +" .cpkt")
 		#Init publisher and subscriber.
-		rospy.Subscriber('/candidates', Label, self.labeling, queue_size=10)
+		rospy.Subscriber('/candidates', Label, self.labeling, queue_size=100)
 		self.cones_pub = rospy.Publisher('/cones', Label, queue_size=10)
 		#Init cone counter.
 		self.cone_counter = 0

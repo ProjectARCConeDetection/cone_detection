@@ -11,6 +11,7 @@ void CarModel::init(Erod erod){
     velocity_right_ = 0.0;
     //Init position.
     car_pose_.position = Eigen::Vector2d(0.0,0.0);
+    car_pose_.orientation = 0;
     //Init timestamp.
     last_update_time_ = ros::Time::now().toSec();
     //Init parameter.
@@ -42,10 +43,12 @@ void CarModel::updateModel(){
     Eigen::Vector2d last_position = car_pose_.position;
     car_pose_.position += time_delta*local_velocity_;
     //Orientation update.
-    double delta_x = fabs(car_pose_.position(0) - last_position(0));
-    double delta_y = fabs(car_pose_.position(1) - last_position(1));
-    std::cout << "dx: " << delta_x << " and dy: " << delta_y << std::endl; 
-    car_pose_.orientation = atan2(delta_y,delta_x);
+    // double delta_x = fabs(car_pose_.position(0) - last_position(0));
+    // double delta_y = fabs(car_pose_.position(1) - last_position(1));
+    // std::cout << "dx: " << delta_x << " and dy: " << delta_y << std::endl; 
+    // car_pose_.orientation = atan2(delta_y,delta_x);
+    double angle_vel = local_velocity_(1)/1.33;
+    car_pose_.orientation += angle_vel*time_delta;
 }
 
 geometry_msgs::Pose CarModel::getPoseMsg(){
