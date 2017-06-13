@@ -14,7 +14,7 @@ import time
 # Training parameter.
 learning_rate = 0.0001
 eps_regularization = 0.1
-dropout = 0.95
+dropout = 0.5
 batch_size = 64
 training_iters = 2000
 test_iterations = 64

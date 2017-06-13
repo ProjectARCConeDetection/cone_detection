@@ -13,11 +13,12 @@ void GridMapper::init(Detection detection){
 
 void GridMapper::updateConeMap(Eigen::Vector2d cone_position){
 	//Get cone position.
-	double x = cone_position(0);
+ 	double x = cone_position(0);
 	double y = cone_position(1);
 	Eigen::Vector2d cone_indizes = findGridElement(x,y);
+	std::cout << "Index: " << cone_indizes(0) << " " << cone_indizes(1) << std::endl;
 	// Updating cone map.
-	cone_map_[cone_indizes(0)][cone_indizes(1)] = 1;	
+	cone_map_[cone_indizes(0)][cone_indizes(1)] = 1;
 }
 
 Eigen::Vector2d GridMapper::convertLocalToGlobal(Candidate cone){
@@ -51,7 +52,7 @@ nav_msgs::OccupancyGrid GridMapper::getOccupancyGridMap(){
   	pose.orientation.z = 0;
   	pose.orientation.w = 1;
   	grid.info.origin = pose;
-	for(int i=0;i<x_steps;++i)
+  	for(int i=0;i<x_steps;++i)
 		for (int j=0;j<y_steps; j++)
 			grid.data.push_back(cone_map_[i][j]);
     return grid;
@@ -69,7 +70,7 @@ void GridMapper::initConeMap(){
 	int y_steps = detection_.searching_width/detection_.searching_resolution;
 	for(int i=0;i<x_steps;++i){
 		std::vector<int> temp;
-		for (int j=-y_steps/2;j<y_steps/2; ++j)
+		for (int j=0;j<y_steps; ++j)
 			temp.push_back(0);
 		cone_map_.push_back(temp);
 	}
