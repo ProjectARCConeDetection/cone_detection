@@ -31,7 +31,7 @@ bool ok=true;
 cv::namedWindow( "Display", cv::WINDOW_AUTOSIZE );
 
 std::ofstream file;
-file.open("/home/arcsystem/cones/candidates/temp/labels.csv");
+file.open("/home/arcsystem/cones/candidates/temp2/labels.csv");
 
 cv::Mat img;
 cv::Mat dst;
@@ -42,7 +42,7 @@ refresh();
 while(ok) {
 	std::stringstream ss;
     ss << index;
-    path = "/home/arcsystem/cones/candidates/temp/" + ss.str() + ".jpg";
+    path = "/home/arcsystem/cones/candidates/temp2/" + ss.str() + ".jpg";
     cv::Size size(800,1200);
     img = cv::imread(path);
     if(img.data) {

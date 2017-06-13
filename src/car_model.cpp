@@ -42,7 +42,6 @@ void CarModel::updateModel(){
     //Position update.
     Eigen::Vector2d last_position = car_pose_.position;
     Eigen::Vector2d global_velocity = car_pose_.localToGlobal(local_velocity_);
-    std::cout << "global_velocity: " << global_velocity(0) << " ," << global_velocity(1) << std::endl;
     car_pose_.position += time_delta*global_velocity;
     //Orientation update.
     double angle_vel = local_velocity_(1)/2.33;

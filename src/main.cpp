@@ -125,7 +125,7 @@ void steeringCallback(const std_msgs::Float64::ConstPtr& msg){
 	Pose car_model_pose; 
 	car_model_pose.position = Eigen::Vector2d(car_pose_msg.position.x, car_pose_msg.position.y);
 	car_model_pose.orientation = car_pose_msg.orientation.w; 
-	car_model_pose.print();  
+	// car_model_pose.print();  
 	grid_mapper.setPose(car_model_pose);
 	//Velocity and Pose update.
   	car_model_pub.publish(car_model.getTwistMsg());

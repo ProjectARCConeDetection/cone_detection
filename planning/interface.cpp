@@ -28,6 +28,9 @@ Control control;
 struct sockaddr_in si_me_, si_other_, si_VCU_;
 int sock_;
 socklen_t slen_;
+double first_steering_should=0;
+double second_steering_should=0;
+double third_steering_should=0;
 //Decleration of functions.
 void modeCallback(const std_msgs::Bool::ConstPtr& msg);
 void stellgroessenCallback(const std_msgs::Float32MultiArray::ConstPtr& msg);
@@ -81,7 +84,11 @@ void modeCallback(const std_msgs::Bool::ConstPtr& msg){
 
 void stellgroessenCallback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 	send_msg("vs",msg->data[1], true, control.max_absolute_velocity, -100, 0);
-	send_msg("ss",msg->data[0]*180/M_PI, true, 
+    third_steering_should = second_steering_should;
+    second_steering_should = first_steering_should;
+    first_steering_should = msg->data[0];
+    double new_steering_should = (first_steering_should+second_steering_should+third_steering_should)/3;
+	send_msg("ss",first_steering_should*180/M_PI, true, 
 				  	control.max_steering_angle, -control.max_steering_angle, 0);
 }
 
