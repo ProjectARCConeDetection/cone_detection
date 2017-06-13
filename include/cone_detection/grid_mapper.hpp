@@ -32,6 +32,6 @@ private:
 	//Helper function.
 	Eigen::Vector2d findGridElement(double x, double y);
 	void initConeMap();
-	void validConeArea(Eigen::Vector2d cone_index);
+	// void validConeArea(Eigen::Vector2d cone_index);
 };
 #endif

@@ -17,8 +17,7 @@ void GridMapper::updateConeMap(Eigen::Vector2d cone_position){
 	double y = cone_position(1);
 	Eigen::Vector2d cone_indizes = findGridElement(x,y);
 	// Updating cone map.
-	validConeArea(cone_indizes);
-	//if(cone_indizes(1) >= 0) validConeArea(cone_indizes);
+	cone_map_[cone_indizes(0)][cone_indizes(1)] = 1;	
 }
 
 Eigen::Vector2d GridMapper::convertLocalToGlobal(Candidate cone){
@@ -53,7 +52,7 @@ nav_msgs::OccupancyGrid GridMapper::getOccupancyGridMap(){
   	pose.orientation.w = 1;
   	grid.info.origin = pose;
 	for(int i=0;i<x_steps;++i)
-		for (int j=0;j<y_steps; ++j)
+		for (int j=0;j<y_steps; j++)
 			grid.data.push_back(cone_map_[i][j]);
     return grid;
 }
@@ -76,23 +75,23 @@ void GridMapper::initConeMap(){
 	}
 }
 
-void GridMapper::validConeArea(Eigen::Vector2d cone_index){
-	//Convert cone area to index.
-	int area_index_x = detection_.cone_area_x/detection_.searching_resolution;
-	int area_index_y = detection_.cone_area_y/detection_.searching_resolution;
-	//Check if cone already exists.
-	int x = std::max(cone_index(0)-area_index_x,0.0);
-	int x_upper_bound = std::min(detection_.searching_length/detection_.searching_resolution-1, (double)x+2*area_index_x);
-	for(;x<x_upper_bound;x++) {
-		int y = std::max(cone_index(1)-area_index_y,0.0);
-		int y_upper_bound = std::min(detection_.searching_width/detection_.searching_resolution-1, (double)y+2*area_index_y);
-		for(; y<y_upper_bound; y++) {
-			if(cone_map_[x][y]==1) {
-				return;
-			}
-	}}
-	//Fill cone area iff cone is not in map.
-	cone_map_[cone_index(0)][cone_index(1)] = 1;	
-}
-
 void GridMapper::setPose(Pose pose){pose_ = pose;}
+
+// void GridMapper::validConeArea(Eigen::Vector2d cone_index){
+// 	bool another_cone = false;
+// 	//Convert cone area to index.
+// 	int area_index_x = detection_.cone_area_x/detection_.searching_resolution;
+// 	int area_index_y = detection_.cone_area_y/detection_.searching_resolution;
+// 	//Check if cone already exists.
+// 	int x = std::max(cone_index(0)-area_index_x,0.0);
+// 	int x_upper_bound = std::min(detection_.searching_length/detection_.searching_resolution-1, (double)x+2*area_index_x);
+// 	for(;x<x_upper_bound;x++) {
+// 		int y = std::max(cone_index(1)-area_index_y,0.0);
+// 		int y_upper_bound = std::min(detection_.searching_width/detection_.searching_resolution-1, (double)y+2*area_index_y);
+// 		for(; y<y_upper_bound; y++) {
+// 			if(cone_map_[x][y]==1) 
+// 				return;
+// 	}}
+// 	//Fill cone area iff cone is not in map.
+// 	if(!another_cone) cone_map_[cone_index(0)][cone_index(1)] = 1;	
+// }

@@ -123,10 +123,9 @@ class GUI(QtGui.QWidget):
 
 	def updatePosition(self, position):
 		#Get car position and add points to graph.
-		pass
-		# self.graph_points_x.append(position[0])
-		# self.graph_points_y.append(position[1])
-		# self.plotcurve.addPoints(self.graph_points_x, self.graph_points_y, symbol='o', pen=QtGui.QPen(QtGui.QColor(255, 0, 0)))
+		self.graph_points_x.append(position[0])
+		self.graph_points_y.append(position[1])
+		self.plotcurve.addPoints(self.graph_points_x, self.graph_points_y, symbol='o', pen=QtGui.QPen(QtGui.QColor(255, 0, 0)))
 
 	def updateTrajectory(self, listx, listy):
 		#Replot graph.

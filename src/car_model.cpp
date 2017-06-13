@@ -41,13 +41,11 @@ void CarModel::updateModel(){
     last_update_time_ = ros::Time::now().toSec();
     //Position update.
     Eigen::Vector2d last_position = car_pose_.position;
-    car_pose_.position += time_delta*local_velocity_;
+    Eigen::Vector2d global_velocity = car_pose_.localToGlobal(local_velocity_);
+    std::cout << "global_velocity: " << global_velocity(0) << " ," << global_velocity(1) << std::endl;
+    car_pose_.position += time_delta*global_velocity;
     //Orientation update.
-    // double delta_x = fabs(car_pose_.position(0) - last_position(0));
-    // double delta_y = fabs(car_pose_.position(1) - last_position(1));
-    // std::cout << "dx: " << delta_x << " and dy: " << delta_y << std::endl; 
-    // car_pose_.orientation = atan2(delta_y,delta_x);
-    double angle_vel = local_velocity_(1)/1.33;
+    double angle_vel = local_velocity_(1)/2.33;
     car_pose_.orientation += angle_vel*time_delta;
 }
 

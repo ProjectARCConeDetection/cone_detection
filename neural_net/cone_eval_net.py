@@ -14,6 +14,9 @@ from sensor_msgs.msg import Image
 
 #Init ros.
 rospy.init_node('cone_eval')
+#Grid parameters.
+cone_area_x = rospy.get_param('/detection/cone_area_x')
+cone_area_y = rospy.get_param('/detection/cone_area_y')
 #Net parameters.
 path_to_candidate = rospy.get_param('/candidate_path')
 path_to_model = rospy.get_param('/model_path')
@@ -54,6 +57,8 @@ class NeuralNet:
 		self.cones_pub = rospy.Publisher('/cones', Label, queue_size=10)
 		#Init cone counter.
 		self.cone_counter = 0
+		#Cone positions.
+		self.cone_positions = []
 
 	def labeling(self,msg):
 		#Get image.
@@ -62,10 +67,19 @@ class NeuralNet:
 		# Labeling.
 		label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image, keep_prob: 1.0})
 		if(label == [0]):
+			#Update cone label.
 			msg.label = True
-			self.cone_counter += 1
+			#Write cone image.
 			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg",convertMsgToArray(msg.image))
+			#Check already existing cones in area.
+			for element in self.cone_positions:
+				if (abs(msg.x - element[0]) < cone_area_x) and (abs(msg.y - element[1]) < cone_area_y):
+					return
+			#Update counter, cone positions and publish.
+			self.cone_counter += 1
+			self.cone_positions.append([msg.x, msg.y])
 			self.cones_pub.publish(msg)
+			print("Cone %f detected at x = %f and y = %f" % (self.cone_counter, msg.x, msg.y))
 #------------------------------------------------------------------------
 
 if __name__ == '__main__':
