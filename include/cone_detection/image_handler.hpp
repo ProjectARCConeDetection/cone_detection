@@ -25,16 +25,12 @@ public:
     ~ImageHandler();
     void init(std::string candidate_path, Cone cone, Detection detection);
     void croppCandidates(std::vector <Candidate> xyz_index_vector);
-    void transformPointToPixel();
     std::vector<cv::Mat> getCandidateVector();
     std::vector<int> getCandidateIndexVector();
     cv_bridge::CvImagePtr getImagePtr();
     sensor_msgs::Image getSensorMsg(const cv::Mat base_image);
-    cv::Mat croppImage(cv::Mat src, int x_start, int y_start);
-    cv::Mat rotateImage(double angle);
-    void showCandidates(cv::Mat src, std::string name);
-    void showCandidates(cv::Mat src, int x_start, int y_start, std::string name);
-    void showCones(std::vector< std::vector<int> > cone_map, Pose pose);
+    void showCones(Pose pose);
+    void setConePosition(Eigen::Vector2d cone_position);
     void setImgPtr(cv_bridge::CvImagePtr cv_ptr);
 private:
 	cv_bridge::CvImagePtr cv_ptr_;   
@@ -42,6 +38,8 @@ private:
     std::vector<cv::Point3d> object_points_;
     std::vector<cv::Mat> candidates_;
     std::vector<int> candidate_indizes_;
+    //Cone global positions.
+    std::vector<Eigen::Vector2d> cones_global_poses_;
     //Parameter.
     Cam cam_;
     Cone cone_;
@@ -49,7 +47,12 @@ private:
     // File path.
     std::string candidate_path_;
     //Helper functions.
+    cv::Mat croppImage(cv::Mat src, int x_start, int y_start);
     std::string numberToString(int number);
+    cv::Mat rotateImage(double angle);
+    void showCandidates(cv::Mat src, std::string name);
+    void showCandidates(cv::Mat src, int x_start, int y_start, std::string name);
+    void transformPointToPixel();
 };
 
 #endif

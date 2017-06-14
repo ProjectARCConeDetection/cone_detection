@@ -100,7 +100,7 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	nav_msgs::OccupancyGrid cone_grid = grid_mapper.getOccupancyGridMap();
 	cone_grid_pub.publish(cone_grid);
 	//Update cone visualisation.
-    // image_handler.showCones(grid_mapper.getConeMap(), grid_mapper.getPose());
+    image_handler.showCones(grid_mapper.getPose());
 	//Clear vectors.
 	xyz_index_vector.clear();
 }
@@ -110,6 +110,7 @@ void conesCallback(const cone_detection::Label::ConstPtr& msg){
 	Eigen::Vector2d cone_position(msg->x, msg->y);
 	//Updating grid map. 
 	grid_mapper.updateConeMap(cone_position);
+	image_handler.setConePosition(cone_position);
 }
 
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg){
@@ -125,7 +126,6 @@ void steeringCallback(const std_msgs::Float64::ConstPtr& msg){
 	Pose car_model_pose; 
 	car_model_pose.position = Eigen::Vector2d(car_pose_msg.position.x, car_pose_msg.position.y);
 	car_model_pose.orientation = car_pose_msg.orientation.w; 
-	// car_model_pose.print();  
 	grid_mapper.setPose(car_model_pose);
 	//Velocity and Pose update.
   	car_model_pub.publish(car_model.getTwistMsg());

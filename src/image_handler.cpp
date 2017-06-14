@@ -70,29 +70,17 @@ void ImageHandler::showCandidates(cv::Mat src, int x_start, int y_start, std::st
     cv::waitKey(10);
 }
 
-void ImageHandler::showCones(std::vector< std::vector<int> > cone_map, Pose pose){
+void ImageHandler::showCones(Pose pose){
     //Rotate image.
     cv::Mat dst = rotateImage(180);
-    //Get all cones in cone map.
-    std::vector<Eigen::Vector2d> cones;
-    int x_steps = detection_.searching_length/detection_.searching_resolution;
-    int y_steps = detection_.searching_width/detection_.searching_resolution;
-    for(int x=0; x<x_steps; ++x)
-        for (int y=0; y<y_steps; ++y)
-            if(cone_map[x][y] == 1){
-                double x_pose = x*detection_.searching_resolution;
-                double y_pose = y*detection_.searching_resolution;
-                cones.push_back(Eigen::Vector2d(x_pose, y_pose));
-            }
     //Convert to global and show boundary boxes.
-    for(int i=0; i<cones.size(); ++i)
-        cones[i] = pose.globalToLocal(cones[i]);
+    std::vector<Eigen::Vector2d> cones;
+    for(int i=0; i<cones_global_poses_.size(); ++i)
+        cones.push_back(pose.globalToLocal(cones_global_poses_[i]));
     //Search for cones in front of car.
     std::vector<Eigen::Vector2d> cones_in_front;
-    for(int i=0; i<cones.size(); ++i){
+    for(int i=0; i<cones.size(); ++i)
         if(cones[i](0) > 0) cones_in_front.push_back(cones[i]);
-        std::cout << "Position: " << cones[i](0) << ", " << cones[i](1) << std::endl;
-    }
     //Show only image iff no cones in front.
     if(cones_in_front.size() == 0){
         showCandidates(dst, "cones");
@@ -105,21 +93,26 @@ void ImageHandler::showCones(std::vector< std::vector<int> > cone_map, Pose pose
         cv::Point3d point;
         point.z = cones_in_front[i](0);
         point.x = -cones_in_front[i](1);
-        point.y = - (-1.4);
+        point.y = - (-1.33);
         object_points_.push_back(point);
     }
     transformPointToPixel();
     if(image_points_.size() > 0){
         // Draws the rect in the original image and show it.
+        cv::Mat src_copy = dst.clone();
         for(int i=0; i<image_points_.size();++i){
             cv::Point point = image_points_[i];
-            int x_start = point.x;
+            int x_start = point.x - cone_.width_pixel;
             int y_start = point.y + cone_.height_pixel/2;
             if(x_start < cam_.image_width-cone_.width_pixel && x_start > 0 
-              && y_start < cam_.image_height-cone_.height_pixel && y_start > 0){ 
-                showCandidates(dst, x_start, y_start, "cones");
+              && y_start < cam_.image_height-cone_.height_pixel && y_start > 0){
+                cv::Point pt1(x_start, y_start);
+                cv::Point pt2(x_start+cone_.width_pixel,y_start-cone_.height_pixel);
+                cv::rectangle(src_copy, pt1, pt2, CV_RGB(255,0,0), 1);
             }
         }
+        cv::imshow("cones", src_copy);
+        cv::waitKey(10);
     }
 }
 
@@ -165,6 +158,10 @@ cv::Mat ImageHandler::rotateImage(double angle){
     cv::Mat rot = cv::getRotationMatrix2D(pt, angle, 1.0);
     cv::warpAffine(src, dst, rot, cv::Size(cam_.image_width, cam_.image_height));
     return dst;
+}
+
+void ImageHandler::setConePosition(Eigen::Vector2d cone_position){
+    cones_global_poses_.push_back(cone_position);
 }
 
 void ImageHandler::setImgPtr(cv_bridge::CvImagePtr cv_ptr){cv_ptr_ = cv_ptr;}
