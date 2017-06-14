@@ -32,6 +32,7 @@ void ImageHandler::croppCandidates(std::vector <Candidate> xyz_index_vector){
     //Rotate Image.
     cv::Mat dst = rotateImage(180);
     // Marking candidates.
+    cv::Mat src_copy = dst.clone();
     if(image_points_.size() > 0){
         // Draws the rect in the original image and show it.
         for(int i=0; i<image_points_.size();++i){
@@ -47,27 +48,14 @@ void ImageHandler::croppCandidates(std::vector <Candidate> xyz_index_vector){
                 //Save and show candidate.
                 std::string name = candidate_path_ + "candidates/" + numberToString(xyz_index_vector[i].index) + ".jpg";
                 cv::imwrite(name, cropped);
-                showCandidates(dst, x_start, y_start, "candidates");
+                cv::Point pt1(x_start, y_start);
+                cv::Point pt2(x_start+cone_.width_pixel,y_start-cone_.height_pixel);
+                cv::rectangle(src_copy, pt1, pt2, CV_RGB(255,0,0), 1);
             }
         }
     }
-    else
-        showCandidates(dst, "candidates");
-}
-
-void ImageHandler::showCandidates(cv::Mat src, std::string name){
-    cv::Mat src_copy = src.clone();
-    cv::imshow(name, src_copy);
-    cv::waitKey(6);
-}
-
-void ImageHandler::showCandidates(cv::Mat src, int x_start, int y_start, std::string name){
-    cv::Mat src_copy = src.clone();
-    cv::Point pt1(x_start, y_start);
-    cv::Point pt2(x_start+cone_.width_pixel,y_start-cone_.height_pixel);
-    cv::rectangle(src_copy, pt1, pt2, CV_RGB(255,0,0), 1);
-    cv::imshow(name, src_copy);
-    cv::waitKey(10);
+    cv::imshow("candidates", src_copy);
+    cv::waitKey(10);   
 }
 
 void ImageHandler::showCones(Pose pose){
@@ -82,8 +70,10 @@ void ImageHandler::showCones(Pose pose){
     for(int i=0; i<cones.size(); ++i)
         if(cones[i](0) > 0) cones_in_front.push_back(cones[i]);
     //Show only image iff no cones in front.
+    cv::Mat src_copy = dst.clone();
     if(cones_in_front.size() == 0){
-        showCandidates(dst, "cones");
+        cv::imshow("candidates", src_copy);
+        cv::waitKey(10);  
         return;
     }
     //Convert to pixel.
@@ -99,7 +89,6 @@ void ImageHandler::showCones(Pose pose){
     transformPointToPixel();
     if(image_points_.size() > 0){
         // Draws the rect in the original image and show it.
-        cv::Mat src_copy = dst.clone();
         for(int i=0; i<image_points_.size();++i){
             cv::Point point = image_points_[i];
             int x_start = point.x - cone_.width_pixel;

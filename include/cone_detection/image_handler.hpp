@@ -50,8 +50,6 @@ private:
     cv::Mat croppImage(cv::Mat src, int x_start, int y_start);
     std::string numberToString(int number);
     cv::Mat rotateImage(double angle);
-    void showCandidates(cv::Mat src, std::string name);
-    void showCandidates(cv::Mat src, int x_start, int y_start, std::string name);
     void transformPointToPixel();
 };
 
