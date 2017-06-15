@@ -2,7 +2,7 @@
 import cv2
 import numpy as np
 
-img = cv2.imread('/home/sele/Desktop/1800.jpg')
+img = cv2.imread('/home/sele/Desktop/3.jpg')
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 edges = cv2.Canny(gray,50,150)
 lines = cv2.HoughLines(edges,0.1,np.pi/360,8)
@@ -26,7 +26,8 @@ for rho, theta in lines[0]:
 		x4 = int(x0 - 1000*(-b))
 		y4 = int(y0 - 1000*(a))
 		angle2 = abs(np.arctan2(y4-y3, x4-x3))*180/np.pi
-		if(abs(angle - angle2) > 6 and abs(angle - angle2) < 8):
+		if(abs(angle - angle2) > 8 and abs(angle - angle2) < 10):
+			print("cone detected !")
 			cv2.line(img, (x1,y1), (x2,y2), (0,0,255), 2)
 			cv2.line(img, (x3,y3), (x4,y4), (0,0,255), 2)
 
