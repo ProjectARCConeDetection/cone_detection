@@ -30,8 +30,8 @@ output_placeholder = tf.placeholder(tf.float32, [None, 2])
 input_placeholder_flat = tf.contrib.layers.flatten(input_placeholder)
 y_true = tf.argmax(output_placeholder, dimension=1)
 output_layer = fully_connected(input_placeholder_flat, 0.01, keep_prob)
-y_pred = tf.argmax(tf.nn.softmax(output_layer), dimension=1)
-
+# y_pred = tf.argmax(tf.nn.softmax(output_layer), dimension=1)
+y_pred = output_layer
 
 def convertMsgToArray(image):
 	bridge = CvBridge()
@@ -65,21 +65,24 @@ class NeuralNet:
 		image = np.zeros((1,image_height, image_width,3))
 		image[0][:][:][:] =  color.rgb2lab(convertMsgToArray(msg.image)) / 255.0
 		# Labeling.
-		label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image, keep_prob: 1.0})
-		if(label == [0]):
-			#Update cone label.
-			msg.label = True
-			#Write cone image.
-			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg",convertMsgToArray(msg.image))
-			#Check already existing cones in area.
-			for element in self.cone_positions:
-				if (abs(msg.x - element[0]) < cone_area_x) and (abs(msg.y - element[1]) < cone_area_y):
-					return
-			#Update counter, cone positions and publish.
-			self.cone_counter += 1
-			self.cone_positions.append([msg.x, msg.y])
-			self.cones_pub.publish(msg)
-			print("Cone %f detected at x = %f and y = %f" % (self.cone_counter, msg.x, msg.y))
+		# label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image, keep_prob: 1.0})
+		# if(label == [0]):
+		label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image, keep_prob: 1.0})[0]
+		if(label[0] < 2.0): return
+		#Update cone label.
+		msg.label = True
+		#Write cone image.
+		cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + "_" + str(label[0]) + ".jpg",convertMsgToArray(msg.image))
+		# cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg",convertMsgToArray(msg.image))
+		#Check already existing cones in area.
+		for element in self.cone_positions:
+			if (abs(msg.x - element[0]) < cone_area_x) and (abs(msg.y - element[1]) < cone_area_y):
+				return
+		#Update counter, cone positions and publish.
+		self.cone_counter += 1
+		self.cone_positions.append([msg.x, msg.y])
+		self.cones_pub.publish(msg)
+		print("Cone %f detected at x = %f and y = %f" % (self.cone_counter, msg.x, msg.y))
 #------------------------------------------------------------------------
 
 if __name__ == '__main__':

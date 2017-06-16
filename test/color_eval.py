@@ -10,6 +10,9 @@ from sensor_msgs.msg import Image
 
 #Init ros.
 rospy.init_node('cone_eval_color')
+#Grid parameters.
+cone_area_x = rospy.get_param('/detection/cone_area_x')
+cone_area_y = rospy.get_param('/detection/cone_area_y')
 #Net parameters.
 path_to_candidate = rospy.get_param('/candidate_path')
 image_width = rospy.get_param('/cone/width_pixel')
@@ -31,10 +34,11 @@ class ColorEvaluator:
 	def __init__(self):
 		#Init publisher and subscriber.
 		rospy.Subscriber('/candidates', Label, self.labeling, queue_size=10)
-		self.cones_pub = rospy.Publisher('/cones_color', Label, queue_size=10)
+		self.cones_pub = rospy.Publisher('/cones', Label, queue_size=10)
 		#Init cone counter.
 		self.cone_counter = 0
-		print("Eval initialised !")
+		#Cone positions.
+		self.cone_positions = []
 
 	def labeling(self,msg):
 		#Get image.
@@ -47,12 +51,21 @@ class ColorEvaluator:
 		#Find colors in bounds and apply mask.
 		mask = cv2.inRange(hsv, lower, upper)
  		output = cv2.bitwise_and(image, image, mask = mask)
-		if(np.linalg.norm(mask) > 2000.0):
-			msg.label = True
-			self.cone_counter += 1
-			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg", image)
-			cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + "_mask.jpg", mask)
-			self.cones_pub.publish(msg)
+		if(np.linalg.norm(mask) < 200.0): return
+		#Update cone label.
+		msg.label = True
+		#Write cone image and mask.
+		cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + ".jpg", image)
+		cv2.imwrite(path_to_candidate + "cones/" + str(self.cone_counter) + "_mask.jpg", mask)
+		#Check already existing cones in area.
+		for element in self.cone_positions:
+			if (abs(msg.x - element[0]) < cone_area_x) and (abs(msg.y - element[1]) < cone_area_y):
+				return
+		#Update counter, cone positions and publish.
+		self.cone_counter += 1
+		self.cone_positions.append([msg.x, msg.y])
+		self.cones_pub.publish(msg)
+		print("Cone %f detected at x = %f and y = %f" % (self.cone_counter, msg.x, msg.y))
 #------------------------------------------------------------------------
 
 if __name__ == '__main__':

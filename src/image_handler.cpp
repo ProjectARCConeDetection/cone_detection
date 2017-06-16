@@ -72,8 +72,8 @@ void ImageHandler::showCones(Pose pose){
     //Show only image iff no cones in front.
     cv::Mat src_copy = dst.clone();
     if(cones_in_front.size() == 0){
-        cv::imshow("candidates", src_copy);
-        cv::waitKey(10);  
+        cv::imshow("cones", src_copy);
+        cv::waitKey(5);  
         return;
     }
     //Convert to pixel.
@@ -100,9 +100,9 @@ void ImageHandler::showCones(Pose pose){
                 cv::rectangle(src_copy, pt1, pt2, CV_RGB(255,0,0), 1);
             }
         }
-        cv::imshow("cones", src_copy);
-        cv::waitKey(10);
     }
+    cv::imshow("cones", src_copy);
+    cv::waitKey(5);
 }
 
 void ImageHandler::transformPointToPixel(){

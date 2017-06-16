@@ -62,7 +62,7 @@ int main(int argc, char** argv){
 	position_pub = node.advertise<geometry_msgs::Pose>("/car_pose", 10);
 	cloud_sub = node.subscribe("/velodyne_points", 10, cloudCallback);
 	raw_image_sub = node.subscribe("/usb_cam/image_raw", 10, imageCallback);
-	cones_sub = node.subscribe("/cones", 10, conesCallback);
+	cones_sub = node.subscribe("/cones", 100, conesCallback);
 	steering_sub = node.subscribe("/state_steering_angle", 1, steeringCallback);
 	wheel_left_sub = node.subscribe("/wheel_rear_left", 1, wheelLeftCallback);
 	wheel_right_sub = node.subscribe("/wheel_rear_right", 1, wheelRightCallback);
