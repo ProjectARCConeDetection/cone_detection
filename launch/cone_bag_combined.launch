@@ -7,7 +7,7 @@
   <!-- CONE DETECTION -->
   <node name="cone_detector" pkg="cone_detection" type="cone_detector" output="screen" />
   <node name="cone_eval_colornet" pkg="cone_detection" type="cone_eval_colornet.py" output="screen" />
-  <node name="viewer" pkg="cone_detection" type="viewer.py" output="screen"  if="false" />
+  <node name="viewer" pkg="cone_detection" type="viewer.py" output="screen" />
   <node name="path_planner" pkg="cone_detection" type="path_planner" output="screen"/>
 
 </launch>

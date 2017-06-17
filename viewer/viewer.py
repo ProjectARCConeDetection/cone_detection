@@ -45,7 +45,7 @@ class GUI(QtGui.QWidget):
 		self.plotwidget = pg.PlotWidget()
 		self.plotcurve = pg.ScatterPlotItem()
 		self.plotwidget.addItem(self.plotcurve)
-		self.plotwidget.setXRange(0, 100)
+		self.plotwidget.setXRange(0, 40)
 		self.plotwidget.setYRange(-10, 10)
 		upper_layout.addWidget(self.plotwidget)
 		#Start button.
