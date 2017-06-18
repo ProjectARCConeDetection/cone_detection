@@ -54,7 +54,7 @@ struct Pose{
 	//Position.
 	Eigen::Vector2d position;
 	//Orientation.
-	double orientation;
+	Eigen::Vector4d orientation;
 	//Functions.
 	Eigen::Vector2d globalToLocal(const Eigen::Vector2d global);
 	Eigen::Vector2d localToGlobal(const Eigen::Vector2d local);
@@ -62,7 +62,9 @@ struct Pose{
 };
 
 namespace transforms{
-	Eigen::Matrix2d getRotationMatrix(double angle);
+	Eigen::Vector2d to2D(const Eigen::Vector3d input);
+	Eigen::Vector3d to3D(const Eigen::Vector2d input);
+	Eigen::Matrix3d getRotationMatrix(Eigen::Vector4d quats);
 }//namespace transforms.
 namespace quat {
 	Eigen::Vector4d multQuaternion(Eigen::Vector4d q1,Eigen::Vector4d q2);

@@ -78,7 +78,8 @@ void gridmapCallback(const nav_msgs::OccupancyGrid::ConstPtr& grid){
 void poseCallback(const geometry_msgs::Pose::ConstPtr& msg){
 	Pose pose;
 	pose.position = Eigen::Vector2d(msg->position.x, msg->position.y);
-	pose.orientation = msg->orientation.w;
+	pose.orientation = Eigen::Vector4d(msg->orientation.x,msg->orientation.y,
+									   msg->orientation.z,msg->orientation.w);
 	pure_pursuit.setPose(pose);
 }
 

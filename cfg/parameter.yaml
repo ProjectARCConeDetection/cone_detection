@@ -42,12 +42,12 @@ neural_net/datasets: ['biberist_20_4', 'hoengg_18_05', 'Hoengg_26_05_01', 'Hoeng
 neural_net/datasets_test: ['hoengg_08_06', 'temp2']
 neural_net/datasets_validation: 'temp2'
 #Paths.
-candidate_path: '/home/sele/cones/candidates/' #Path to candidate images.
-model_path: '/home/sele/cones/models/' #Path to trained models.
+candidate_path: '/home/arcsystem/cones/candidates/' #Path to candidate images.
+model_path: '/home/arcsystem/cones/models/' #Path to trained models.
 #Control.
 control/distance_interpolation: 3 #Distance of three points for curvature calculation.
 control/K1_LAD_S: 1.5 #Dynamic part for look ahead distance steer.
-control/K2_LAD_S: 0 #Static part for look ahead distance steer.
+control/K2_LAD_S: 1 #Static part for look ahead distance steer.
 control/K1_LAD_V: 0.5 #Dynamic part for lad radius for velocity.
 control/K2_LAD_V: 0 #Dynamic part for lad radius for velocity reference.
 control/upperbound_lad_s: 7.3 #Empyrisch getestet

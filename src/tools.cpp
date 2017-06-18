@@ -42,37 +42,59 @@ void Cam::initCamMatrices(){
     image_width = 640;
 }
 
-Eigen::Vector2d Pose::globalToLocal(const Eigen::Vector2d global){
+Eigen::Vector2d Pose::globalToLocal(Eigen::Vector2d global){
   //Translatation
-  Eigen::Vector2d temp = global - position;
+  Eigen::Vector3d temp = transforms::to3D(global - position);
   //Rotation
-  Eigen::Matrix2d R = transforms::getRotationMatrix(orientation);
-  Eigen::Matrix2d T = R.transpose();
-  Eigen::Vector2d local = T*temp;
-  return local;
+  Eigen::Matrix3d R = transforms::getRotationMatrix(orientation);
+  Eigen::Matrix3d T = R.transpose();
+  Eigen::Vector3d local = T*temp;
+  //Convert to 2D.
+  Eigen::Vector2d local_2D = transforms::to2D(local);
+  return local_2D;
 }
 
 Eigen::Vector2d Pose::localToGlobal(const Eigen::Vector2d local){
+    //Convert to 3D.
+    Eigen::Vector3d local_3D = transforms::to3D(local);
     //Rotate.
-    Eigen::Matrix2d R = transforms::getRotationMatrix(orientation);
-    Eigen::Vector2d global = R*local;
-    return global;
+    Eigen::Matrix3d R = transforms::getRotationMatrix(orientation);
+    Eigen::Vector3d global = R*local_3D;
+    //Convert to 2D.
+    Eigen::Vector2d global_2D = transforms::to2D(global);
+    return global_2D;
 }
 
 void Pose::print(){
     std::cout << "---------------------------" << std::endl;
     std::cout << "Position: " << position(0) << ", " << position(1) << std::endl;
-    std::cout << "Orientation: " << orientation*180/M_PI << std::endl; 
+    std::cout << "Orientation: " << orientation(0) << ", " << orientation(1) << ", " 
+              << orientation(2) << ", " << orientation(3) << std::endl; 
 }
 
 namespace transforms{
 
-Eigen::Matrix2d getRotationMatrix(double angle){ 
-    Eigen::Matrix2d rotation_matrix;
-    rotation_matrix<<cos(angle), -sin(angle), 
-                    sin(angle), cos(angle);
+Eigen::Matrix3d getRotationMatrix(Eigen::Vector4d quats){ 
+    double a = quats(3); double b = quats(0);
+    double c = quats(1); double d = quats(2);
+    Eigen::Matrix3d rotation_matrix;
+    rotation_matrix<<(1-2*(c*c + d*d)), 2*(b*c - a*d), 2*(b*d + a*c), 
+                    2*(b*c + a*d), (1-2*(d*d + b*b)), 2*(c*d - a*b), 
+                    2*(b*d - a*c), 2*(c*d + a*b), (1-2*(b*b + c*c));
     return rotation_matrix;
 }
+
+
+Eigen::Vector2d to2D(const Eigen::Vector3d input){
+    Eigen::Vector2d output(input(0),input(1));
+    return output;
+}
+
+Eigen::Vector3d to3D(const Eigen::Vector2d input){
+    Eigen::Vector3d output(input(0),input(1),0);
+    return output;
+}
+
 }//namespace transforms.
 
 namespace quat{

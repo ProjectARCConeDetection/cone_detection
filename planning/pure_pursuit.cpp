@@ -20,7 +20,7 @@ AckermannControl PurePursuit::calculateControls(std::vector<Eigen::Vector2d> pat
 	path_ = path;
 	//Calculate controls.
 	should_controls_.steering_angle = calculateSteering();
-	should_controls_.velocity = 1.0;
+	should_controls_.velocity = 2.5;
 	return should_controls_;
 }
 

@@ -13,17 +13,14 @@
 
 //Publisher.
 ros::Publisher candidates_pub;
-ros::Publisher car_model_pub;
-ros::Publisher car_model_pose;
+
 ros::Publisher cone_grid_pub;
 ros::Publisher labeled_cloud_pub;
 ros::Publisher position_pub;
 ros::Subscriber cloud_sub;
 ros::Subscriber cones_sub;
 ros::Subscriber raw_image_sub;
-ros::Subscriber steering_sub;
-ros::Subscriber wheel_left_sub;
-ros::Subscriber wheel_right_sub;
+ros::Subscriber orb_sub;
 //Init classes.
 CarModel car_model;
 LaserDetection cone_detector;
@@ -34,13 +31,12 @@ int counter=0;
 void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg);
 void conesCallback(const cone_detection::Label::ConstPtr& msg);
 void imageCallback(const sensor_msgs::Image::ConstPtr& msg);
-void steeringCallback(const std_msgs::Float64::ConstPtr& msg);
-void wheelLeftCallback(const std_msgs::Float64::ConstPtr& msg);
-void wheelRightCallback(const std_msgs::Float64::ConstPtr& msg);
+
 void publishCandidates(std::vector <Candidate> xyz_index_vector,
 					   std::vector<cv::Mat> candidates, std::vector<int> candidate_indizes);
 void gettingParameter(ros::NodeHandle* node, std::string* candidate_path,
 					  Cone* cone, Detection* detection, Erod* erod);
+void orbCallback(const nav_msgs::Odometry::ConstPtr& msg);
 
 int main(int argc, char** argv){
 	ros::init(argc, argv, "cone_detector");
@@ -50,12 +46,10 @@ int main(int argc, char** argv){
 	Cone cone; Detection detection; Erod erod;
 	gettingParameter(&node,&candidate_path,&cone,&detection,&erod);
 	//Init classes.
-	car_model.init(erod);
 	grid_mapper.init(detection);
 	image_handler.init(candidate_path, cone, detection);
 	cone_detector.init(cone, detection, erod);
 	//Init pubs & subs.
-	car_model_pub = node.advertise<geometry_msgs::TwistStamped>("/car_model_velocity", 1);
 	candidates_pub = node.advertise<cone_detection::Label>("/candidates", 10);
 	cone_grid_pub = node.advertise<nav_msgs::OccupancyGrid>("/cones_grid", 10);
 	labeled_cloud_pub = node.advertise<sensor_msgs::PointCloud2>("/labeled_points", 10);
@@ -63,9 +57,7 @@ int main(int argc, char** argv){
 	cloud_sub = node.subscribe("/velodyne_points", 10, cloudCallback);
 	raw_image_sub = node.subscribe("/usb_cam/image_raw", 10, imageCallback);
 	cones_sub = node.subscribe("/cones", 100, conesCallback);
-	steering_sub = node.subscribe("/state_steering_angle", 1, steeringCallback);
-	wheel_left_sub = node.subscribe("/wheel_rear_left", 1, wheelLeftCallback);
-	wheel_right_sub = node.subscribe("/wheel_rear_right", 1, wheelRightCallback);
+	orb_sub = node.subscribe("/orb_slam2/odometry", 10, orbCallback);
   	//Spinning.
   	ros::Rate rate(10);
   	while(ros::ok()){
@@ -100,7 +92,7 @@ void cloudCallback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 	nav_msgs::OccupancyGrid cone_grid = grid_mapper.getOccupancyGridMap();
 	cone_grid_pub.publish(cone_grid);
 	//Update cone visualisation.
-    image_handler.showCones(grid_mapper.getPose());
+    //image_handler.showCones(grid_mapper.getPose());
 	//Clear vectors.
 	xyz_index_vector.clear();
 }
@@ -119,24 +111,36 @@ void imageCallback(const sensor_msgs::Image::ConstPtr& msg){
     image_handler.setImgPtr(cv_ptr);
 }
 
-void steeringCallback(const std_msgs::Float64::ConstPtr& msg){
-	car_model.setSteeringAngle(msg->data);
-	//Update grid pose.
-	geometry_msgs::Pose car_pose_msg = car_model.getPoseMsg();
-	Pose car_model_pose; 
-	car_model_pose.position = Eigen::Vector2d(car_pose_msg.position.x, car_pose_msg.position.y);
-	car_model_pose.orientation = car_pose_msg.orientation.w; 
-	grid_mapper.setPose(car_model_pose);
-	//Velocity and Pose update.
-  	car_model_pub.publish(car_model.getTwistMsg());
-  	position_pub.publish(car_pose_msg);
-}
 
-void wheelLeftCallback(const std_msgs::Float64::ConstPtr& msg){
-	car_model.setRearLeftWheelVel(msg->data);
-}
-void wheelRightCallback(const std_msgs::Float64::ConstPtr& msg){
-	car_model.setRearRightWheelVel(msg->data);
+void orbCallback(const nav_msgs::Odometry::ConstPtr& msg){
+	//Get orb pose.
+	Pose orb_pose;
+	geometry_msgs::Pose temp = msg->pose.pose;
+	Eigen::Vector3d temp_position = Eigen::Vector3d(temp.position.x, temp.position.y, temp.position.z);
+	Eigen::Vector4d temp_orientation = Eigen::Vector4d(temp.orientation.x, temp.orientation.y, 
+											 		   temp.orientation.z, temp.orientation.w);
+	//Transfrom orientation.
+	Eigen::Vector4d init_quat(-0.01668, 0.778, -0.62782, 0.003157);
+	Eigen::Vector4d init_quat_soll(0,0,0,1);	
+	Eigen::Vector4d quat_init_trafo = quat::diffQuaternion(init_quat, init_quat_soll);
+  	orb_pose.orientation = quat::diffQuaternion(quat_init_trafo, temp_orientation);
+  	//Transform position.
+  	Eigen::Vector2d trans_vi_laser(0,-2.3);
+  	Eigen::Vector2d trans_vi_global = orb_pose.localToGlobal(trans_vi_laser);
+	Eigen::Vector2d position_rotated =  transforms::to2D(temp_position) + trans_vi_global;  
+	orb_pose.position = Eigen::Vector2d(-position_rotated(1), position_rotated(0));	
+  	//Set pose.
+  	grid_mapper.setPose(orb_pose);
+  	//Publish car pose msg.
+  	geometry_msgs::Pose pose_msg;
+  	pose_msg.position.x = orb_pose.position(0);
+  	pose_msg.position.y = orb_pose.position(1);
+  	pose_msg.position.z = 0.0;
+  	pose_msg.orientation.x = orb_pose.orientation(0);
+  	pose_msg.orientation.y = orb_pose.orientation(1);
+  	pose_msg.orientation.z = orb_pose.orientation(2);
+  	pose_msg.orientation.w = orb_pose.orientation(3);
+  	position_pub.publish(pose_msg);
 }
 
 void publishCandidates(std::vector <Candidate> xyz_index_vector,
