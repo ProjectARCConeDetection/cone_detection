@@ -36,7 +36,7 @@ def conv_net(input_image, eps_regularization):
                                     weights_regularizer=tf.contrib.layers.l1_regularizer(eps_regularization)
                                     )
     pool2 = tf.contrib.layers.max_pool2d(inputs = conv2, kernel_size = [2,2], stride = [1,1])
-    pool2_flat = tf.contrib.layers.flatten(pool1, [-1, 7*7*64])
+    pool2_flat = tf.contrib.layers.flatten(pool2, [-1, 7*7*64])
     fc = tf.contrib.layers.fully_connected(inputs = pool2_flat, 
                                            num_outputs = 1024, 
                                            activation_fn = tf.nn.relu,

@@ -34,11 +34,11 @@ y_pred = tf.nn.softmax(output_layer)
 # Color detection parameter.
 lower = np.array([115,50,50])
 upper = np.array([130,255,255])
-maskmin = 1000.0
+maskmin = rospy.get_param('/detection/color_threshold')
 # Line detection parameter.
 lower_angle = -1.0
 upper_angle = 30.0
-line_filter = 10
+line_filter = rospy.get_param('/detection/line_threshold')
 
 def convertMsgToArray(image):
     bridge = CvBridge()

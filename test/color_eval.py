@@ -17,6 +17,8 @@ cone_area_y = rospy.get_param('/detection/cone_area_y')
 path_to_candidate = rospy.get_param('/candidate_path')
 image_width = rospy.get_param('/cone/width_pixel')
 image_height = rospy.get_param('/cone/height_pixel')
+#Detection thresholds.
+maskmin = rospy.get_param('/detection/color_threshold')
 
 def convertMsgToArray(image):
 	bridge = CvBridge()
@@ -51,7 +53,7 @@ class ColorEvaluator:
 		#Find colors in bounds and apply mask.
 		mask = cv2.inRange(hsv, lower, upper)
  		output = cv2.bitwise_and(image, image, mask = mask)
-		if(np.linalg.norm(mask) < 200.0): return
+		if(np.linalg.norm(mask) < maskmin): return
 		#Update cone label.
 		msg.label = True
 		#Write cone image and mask.
