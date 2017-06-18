@@ -95,8 +95,8 @@ void ImageHandler::showCones(Pose pose){
             int y_start = point.y + cone_.height_pixel;
             if(x_start < cam_.image_width-cone_.width_pixel && x_start > 0 
               && y_start < cam_.image_height-cone_.height_pixel && y_start > 0){
-                cv::Point pt1(x_start, y_start);
-                cv::Point pt2(x_start+cone_.width_pixel,y_start-cone_.height_pixel);
+                cv::Point pt1(x_start, y_start-cone_.height_pixel);
+                cv::Point pt2(x_start+cone_.width_pixel, y_start);
                 cv::rectangle(src_copy, pt1, pt2, CV_RGB(255,0,0), 1);
             }
         }

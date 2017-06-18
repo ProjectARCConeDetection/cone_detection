@@ -34,11 +34,11 @@ y_pred = tf.nn.softmax(output_layer)
 # Color detection parameter.
 lower = np.array([115,50,50])
 upper = np.array([130,255,255])
-maskmin = 500.0
+maskmin = 1000.0
 # Line detection parameter.
-lower_angle = 50.0
-upper_angle = 80.0
-line_filter = 4.0
+lower_angle = -1.0
+upper_angle = 30.0
+line_filter = 10
 
 def convertMsgToArray(image):
     bridge = CvBridge()
@@ -81,6 +81,7 @@ class CombinedDetector:
         gray = cv2.cvtColor(image_line, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray,120,150)
         lines = cv2.HoughLines(edges,0.1,np.pi/180,line_filter)
+        angle = -1.0
         if lines != None: 
             for rho, theta in lines[0]:
                 a = np.cos(theta); b = np.sin(theta);
@@ -91,7 +92,7 @@ class CombinedDetector:
                 if(y2==y1): angle = 90
                 if(angle>90): angle = angle - 90
                 angle = max(0, angle)
-            if(angle <= 3.0 or angle > 40): return
+            if(angle < lower_angle or angle > upper_angle): return
             #     if(angle > lower_angle and angle < upper_angle):
             #         cv2.line(image_line, (x1,y1), (x2,y2), (0,0,255), 2)
             #         break
@@ -100,7 +101,7 @@ class CombinedDetector:
         image_array = np.zeros((1,image_height, image_width,3))
         image_array[0][:][:][:] =  color.rgb2lab(convertMsgToArray(msg.image)) / 255.0
         label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image_array, keep_prob: 1.0})[0]
-        if(label[0] == 0.0): return
+        if(label[0] <= 0.01): return
         #Update cone label.
         msg.label = True
         self.pass_counter += 1
