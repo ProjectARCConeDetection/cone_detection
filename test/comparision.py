@@ -24,20 +24,20 @@ filename = "/home/sele/Desktop/comparison.png"
 # Colour detection.
 lower = np.array([115,50,50])
 upper = np.array([130,255,255])
-colour_minnorm = 2000.0
+colour_minnorm = 2500.0
 # Triangle detection.
 triangle_lower_angle =  50.0
 triangle_upper_angle = 80.0
 triangle_line_filter = 8
 # Angle detection.
-angle_lower_angle =  -1.0
+angle_lower_angle =  -1.1
 angle_upper_angle = 30.0
-angle_line_filter = 12
+angle_line_filter = 8
 # Machine detection.
 machine_threshold = 0.1
 # Overfilter detection.
-filter_line_filter = 8
-filter_colour_minnorm = 1500.0
+filter_line_filter = 12
+filter_colour_minnorm = 2500.0
 filter_machine_threshold = 0.1
 
 # Define network placeholder.
@@ -238,9 +238,8 @@ def overallFilteredClassification(data):
                 x1 = int(x0 + 1000*(-b)); y1 = int(y0 + 1000*(a))
                 x2 = int(x0 - 1000*(-b)); y2 = int(y0 - 1000*(a))
                 angle = abs(np.arctan2(y2-y1, x2-x1))*180/np.pi
-                if(y2==y1): angle = 90
                 if(angle>90): angle = angle - 90
-                if(angle < angle_lower_angle or angle > angle_upper_angle): 
+                if(angle > angle_lower_angle and angle < angle_upper_angle): 
                     cone_detected = True
             if not cone_detected: 
                 over_filter_list.append([None, 0])

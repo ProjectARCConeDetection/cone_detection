@@ -91,7 +91,7 @@ class CombinedDetector:
                 x1 = int(x0 + 1000*(-b)); y1 = int(y0 + 1000*(a));
                 x2 = int(x0 - 1000*(-b)); y2 = int(y0 - 1000*(a));
                 angle = abs(np.arctan2(y2-y1, x2-x1))*180/np.pi
-                if(y2==y1): angle = 90
+                # if(y2==y1): angle = 90
                 if(angle>90): angle = angle - 90
                 angle = max(0, angle)
             if(angle < lower_angle or angle > upper_angle): return
