@@ -39,6 +39,8 @@ maskmin = rospy.get_param('/detection/color_threshold')
 lower_angle = -1.0
 upper_angle = 30.0
 line_filter = rospy.get_param('/detection/line_threshold')
+# Net detection.
+pred_threshold = rospy.get_param('/detection/net_w_softmax')
 
 def convertMsgToArray(image):
     bridge = CvBridge()
@@ -82,7 +84,7 @@ class CombinedDetector:
         edges = cv2.Canny(gray,120,150)
         lines = cv2.HoughLines(edges,0.1,np.pi/180,line_filter)
         angle = -1.0
-        if lines != None: 
+        if lines is not None: 
             for rho, theta in lines[0]:
                 a = np.cos(theta); b = np.sin(theta);
                 x0 = a*rho; y0 = b*rho;
@@ -101,7 +103,7 @@ class CombinedDetector:
         image_array = np.zeros((1,image_height, image_width,3))
         image_array[0][:][:][:] =  color.rgb2lab(convertMsgToArray(msg.image)) / 255.0
         label = y_pred.eval(session=self.session,feed_dict={input_placeholder: image_array, keep_prob: 1.0})[0]
-        if(label[0] <= 0.01): return
+        if(label[0] <= pred_threshold): return
         #Update cone label.
         msg.label = True
         self.pass_counter += 1

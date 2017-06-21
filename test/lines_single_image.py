@@ -7,7 +7,7 @@ gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 edges = cv2.Canny(gray,90,150)
 lines = cv2.HoughLines(edges,0.1,np.pi/180,4)
 angle = -1.0
-if lines != None: 
+if lines is not None: 
     for rho, theta in lines[0]:
         a = np.cos(theta); b = np.sin(theta);
         x0 = a*rho; y0 = b*rho;

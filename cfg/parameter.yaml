@@ -37,6 +37,7 @@ detection/searching_length: 150 #x-Range for searching.
 detection/searching_resolution: 0.5 #Grid resolution.
 detection/searching_width: 6.0 #y-Range for searching.
 detection/intensity_threshold: 60 #Minimal intensity of detected objects.
+detection/net_w_softmax: 0.01 #Neural network output w softmax.
 detection/net_wo_softmax: 2.0 #Neural network output w/o softmax.
 detection/color_threshold: 1000.0 #Color filter minimal intensity.
 detection/line_threshold: 10 #Line filter minimal intensity.
